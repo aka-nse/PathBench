@@ -4,7 +4,7 @@ partial class CodePathCounter
 {
     private sealed class InvocationCounter_ : InvocationCounter
     {
-        private CodePathCounter Owner { get; }
+        private MethodCounter Owner { get; }
         public string? MethodName { get; }
         public DateTimeOffset StartAt { get; }
         public long InvocationIndex { get; }
@@ -19,7 +19,7 @@ partial class CodePathCounter
         private long _endAtTimestamp = -1;
 
         public InvocationCounter_(
-            CodePathCounter owner,
+            MethodCounter owner,
             string? methodName,
             long invocationIndex,
             object? argumentsExpressionProvider)
@@ -29,7 +29,7 @@ partial class CodePathCounter
             ArgumentsExpressionProvider = argumentsExpressionProvider;
             StartAt = DateTimeOffset.UtcNow;
             ManagedThreadId = Environment.CurrentManagedThreadId;
-            _startAtTimestamp = owner.TimeProvider.GetTimestamp();
+            _startAtTimestamp = owner.Owner.TimeProvider.GetTimestamp();
 
             _checkpoints = [];
             MarkCheckpoint(StartCheckpointName, null);
@@ -37,14 +37,14 @@ partial class CodePathCounter
 
         public override void Dispose()
         {
-            _endAtTimestamp = Owner.TimeProvider.GetTimestamp();
+            _endAtTimestamp = Owner.Owner.TimeProvider.GetTimestamp();
             MarkCheckpoint(EndCheckpointName, _endAtTimestamp, null);
             (_freezedCheckpoints, _checkpoints) = (_checkpoints, null);
             Owner.TerminateInvocation(this);
         }
 
         public override void MarkCheckpoint(string name, object? noteProvider = null) =>
-            MarkCheckpoint(name, Owner.TimeProvider.GetTimestamp(), noteProvider);
+            MarkCheckpoint(name, Owner.Owner.TimeProvider.GetTimestamp(), noteProvider);
 
         private void MarkCheckpoint(string name, long timestamp, object? noteProvider)
         {
