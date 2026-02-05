@@ -1,10 +1,10 @@
 namespace PathBench;
 
-partial class CodePathCounter
+partial class CodePathProfiler
 {
-    private sealed class InvocationCounter_ : InvocationCounter
+    private sealed class InvocationProfiler_ : InvocationProfiler
     {
-        private MethodCounter Owner { get; }
+        private MethodProfiler Owner { get; }
         public string? MethodName { get; }
         public DateTimeOffset StartAt { get; }
         public long InvocationIndex { get; }
@@ -18,16 +18,17 @@ partial class CodePathCounter
         private List<CheckpointMeasurement>? _freezedCheckpoints;
         private long _endAtTimestamp = -1;
 
-        public InvocationCounter_(
-            MethodCounter owner,
+        public InvocationProfiler_(
+            MethodProfiler owner,
             string? methodName,
             long invocationIndex,
             object? argumentsExpressionProvider)
         {
             Owner = owner;
             MethodName = methodName;
+            StartAt = Owner.Owner.TimeProvider.GetUtcNow();
+            InvocationIndex = invocationIndex;
             ArgumentsExpressionProvider = argumentsExpressionProvider;
-            StartAt = DateTimeOffset.UtcNow;
             ManagedThreadId = Environment.CurrentManagedThreadId;
             _startAtTimestamp = owner.Owner.TimeProvider.GetTimestamp();
 
@@ -45,6 +46,23 @@ partial class CodePathCounter
 
         public override void MarkCheckpoint(string name, object? noteProvider = null) =>
             MarkCheckpoint(name, Owner.Owner.TimeProvider.GetTimestamp(), noteProvider);
+
+        public override InvocationMeasurement CreateMeasurement()
+        {
+            var path = Checkpoints.Zip(Checkpoints.Skip(1), static (start, end) =>
+                new CheckpointTransitionMeasurement(
+                    Key: new CheckpointTransitionKey(start.Name, end.Name),
+                    Note: start.NoteProvider?.ToString(),
+                    Duration: TimeSpan.FromTicks(end.DurationTimestamp - start.DurationTimestamp)));
+            return new(
+                CounterName: Owner.Name,
+                InvocationId: InvocationIndex,
+                StartAt: StartAt,
+                ManagedThreadId: ManagedThreadId,
+                ArgumentsExpression: ArgumentsExpressionProvider?.ToString(),
+                Duration: TimeSpan.FromTicks(Duration),
+                CodePathMeasurements: [.. path]);
+        }
 
         private void MarkCheckpoint(string name, long timestamp, object? noteProvider)
         {

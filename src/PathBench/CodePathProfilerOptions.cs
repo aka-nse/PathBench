@@ -1,6 +1,6 @@
 namespace PathBench;
 
-public class CodePathCounterOptions
+public class CodePathProfilerOptions
 {
     public const int DefaultRecentHistoryCacheSize = 256;
     public const int DefaultWorstHistoryCacheSize = 256;
