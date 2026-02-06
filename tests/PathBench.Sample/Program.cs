@@ -35,6 +35,13 @@ static class SampleClass
                 Console.WriteLine($"      StdDev Duration: {pathSummary.StandardDeviationOfDuration.TotalMilliseconds} ms");
             }
         }
+        Console.WriteLine();
+        var sw = new StringWriter();
+        MethodProfileReportFormatter.GraphvizStyle.Format(
+            reports[nameof(SimulatedWork)],
+            provider: null,
+            writer: sw);
+        Console.WriteLine(sw.ToString());
     }
 
     private static async Task SimulatedWork(int seed)
