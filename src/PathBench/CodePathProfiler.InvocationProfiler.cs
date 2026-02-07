@@ -33,19 +33,19 @@ partial class CodePathProfiler
             _startAtTimestamp = owner.Owner.TimeProvider.GetTimestamp();
 
             _checkpoints = [];
-            MarkCheckpoint(StartCheckpointName, null);
+            MarkCheckpoint(StartCheckpointName, int.MinValue, null);
         }
 
         public override void Dispose()
         {
             _endAtTimestamp = Owner.Owner.TimeProvider.GetTimestamp();
-            MarkCheckpoint(EndCheckpointName, _endAtTimestamp, null);
+            MarkCheckpoint(EndCheckpointName, int.MaxValue, null);
             (_freezedCheckpoints, _checkpoints) = (_checkpoints, null);
             Owner.TerminateInvocation(this);
         }
 
-        public override void MarkCheckpoint(string name, object? noteProvider = null) =>
-            MarkCheckpoint(name, Owner.Owner.TimeProvider.GetTimestamp(), noteProvider);
+        public override void MarkCheckpoint(string name, int orderingKey, object? noteProvider = null) =>
+            MarkCheckpoint(name, orderingKey, Owner.Owner.TimeProvider.GetTimestamp(), noteProvider);
 
         internal protected override InvocationMeasurementReport CreateMeasurementReport()
         {
@@ -64,15 +64,16 @@ partial class CodePathProfiler
                 CodePathMeasurements: [.. path]);
         }
 
-        private void MarkCheckpoint(string name, long timestamp, object? noteProvider)
+        private void MarkCheckpoint(string name, int sortKey, long timestamp, object? noteProvider)
         {
             var checkpoints = _checkpoints ?? throw new ObjectDisposedException(null);
-            checkpoints.Add(new(name, noteProvider, timestamp));
+            checkpoints.Add(new(name, sortKey, noteProvider, timestamp));
         }
     }
 
     private readonly record struct CheckpointMeasurement(
         string Name,
+        int SortKey,
         object? NoteProvider,
         long DurationTimestamp);
 }

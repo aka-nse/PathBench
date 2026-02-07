@@ -20,6 +20,15 @@ public enum HistoryType
 }
 
 /// <summary>
+/// Represents metadata associated with a checkpoint operation.
+/// </summary>
+/// <param name="Name"></param>
+/// <param name="SortKey"></param>
+public record class CheckpointMetadata(
+    string Name,
+    int SortKey);
+
+/// <summary>
 /// Key identifying a code path between two checkpoints.
 /// </summary>
 /// <param name="StartCheckpoint"></param>
@@ -35,6 +44,7 @@ public record struct CheckpointTransitionKey(
 /// <param name="TotalTimes"></param>
 /// <param name="MeanDuration"></param>
 /// <param name="StandardDeviationOfDuration"></param>
+/// <param name="FoundCheckpoints"></param>
 /// <param name="CodePathSummaries"></param>
 /// <param name="Histories"></param>
 public record class MethodProfileReport(
@@ -42,6 +52,7 @@ public record class MethodProfileReport(
     long TotalTimes,
     TimeSpan MeanDuration,
     TimeSpan? StandardDeviationOfDuration,
+    ImmutableDictionary<string, CheckpointMetadata> FoundCheckpoints,
     ImmutableDictionary<CheckpointTransitionKey, CheckpointTransitionProfileReport> CodePathSummaries,
     ImmutableDictionary<HistoryType, ImmutableArray<InvocationMeasurementReport>> Histories
     )

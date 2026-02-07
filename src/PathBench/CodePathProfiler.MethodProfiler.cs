@@ -59,7 +59,7 @@ partial class CodePathProfiler
                     var y = (double)(end.DurationTimestamp - start.DurationTimestamp) / Owner.TimeProvider.TimestampFrequency;
                     if (!_CodePathResults.TryGetValue(key, out var result))
                     {
-                        _CodePathResults.Add(key, result = new(key));
+                        _CodePathResults.Add(key, result = new(key, start.SortKey, end.SortKey));
                     }
                     result.IncrementResult(y);
                 }
@@ -89,15 +89,19 @@ partial class CodePathProfiler
             long times;
             double mean_sec;
             double sd_sec;
-            ImmutableDictionary<CheckpointTransitionKey, CheckpointTransitionProfileReport> codePathSummaries;
             InvocationProfiler_[] recentHistory;
             InvocationProfiler_[] worstHistory;
+            var foundCheckpoints =ImmutableDictionary.CreateBuilder<string, CheckpointMetadata>();
+            var codePathSummaries = ImmutableDictionary.CreateBuilder<CheckpointTransitionKey, CheckpointTransitionProfileReport>();
             using (_lockToken.EnterScope())
             {
                 (times, mean_sec, sd_sec) = _overallDurations;
-                codePathSummaries = _CodePathResults.ToImmutableDictionary(
-                    static kv => kv.Key,
-                    static kv => kv.Value.CreateSummary());
+                foreach(var (key, result) in _CodePathResults)
+                {
+                    foundCheckpoints.TryAdd(key.StartCheckpoint, new CheckpointMetadata(key.StartCheckpoint, result.StartCheckpointSortKey));
+                    foundCheckpoints.TryAdd(key.EndCheckpoint, new CheckpointMetadata(key.EndCheckpoint, result.EndCheckpointSortKey));
+                    codePathSummaries.Add(key, result.CreateSummary());
+                }
                 recentHistory = [.. _RecentHistory];
                 worstHistory = [.. _WorstHistory.Values];
             }
@@ -109,14 +113,17 @@ partial class CodePathProfiler
                 TotalTimes: times,
                 MeanDuration: TimeSpan.FromSeconds(mean_sec),
                 StandardDeviationOfDuration: double.IsNaN(sd_sec) ? null : TimeSpan.FromSeconds(sd_sec),
-                CodePathSummaries: codePathSummaries,
+                FoundCheckpoints: foundCheckpoints.ToImmutable(),
+                CodePathSummaries: codePathSummaries.ToImmutable(),
                 Histories: histories.ToImmutable());
         }
 
 
-        private class CodePathResult(CheckpointTransitionKey key)
+        private class CodePathResult(CheckpointTransitionKey key, int startCheckpointSortKey, int endCheckpointSortKey)
         {
             public CheckpointTransitionKey Key { get; } = key;
+            public int StartCheckpointSortKey { get; } = startCheckpointSortKey;
+            public int EndCheckpointSortKey { get; } = endCheckpointSortKey;
             private WelfordStatistics _durations;
 
             public void IncrementResult(double duration_sec) =>
@@ -125,7 +132,7 @@ partial class CodePathProfiler
             public CheckpointTransitionProfileReport CreateSummary()
             {
                 var (times, mean_sec, sd_sec) = _durations;
-                return new( Key, times, TimeSpan.FromSeconds(mean_sec), double.IsNaN(sd_sec) ? null : TimeSpan.FromSeconds(sd_sec));
+                return new(Key, times, TimeSpan.FromSeconds(mean_sec), double.IsNaN(sd_sec) ? null : TimeSpan.FromSeconds(sd_sec));
             }
         }
     }

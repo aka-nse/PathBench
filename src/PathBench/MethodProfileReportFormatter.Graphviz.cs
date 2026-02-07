@@ -19,7 +19,7 @@ partial class MethodProfileReportFormatter
         GraphvizStyleFormatterOptions? options = null) =>
         new GraphvizStyle_(options ?? GraphvizStyleFormatterOptions.Default);
 
-    private sealed class GraphvizStyle_(IGraphvizStyleFormatterOptions options)
+    internal sealed class GraphvizStyle_(IGraphvizStyleFormatterOptions options)
         : MethodProfileReportFormatter
     {
         private readonly string _fontName = options.FontName;
@@ -27,60 +27,55 @@ partial class MethodProfileReportFormatter
         public override void Format(MethodProfileReport report, TextWriter writer)
         {
             writer.WriteLine($$"""
-                digraph {{Sanitize(report.CounterName)}} {
+                digraph {{SanitizeIdentifier(report.CounterName)}} {
                     graph [
                         fontname = "{{_fontName}}",
-                        label = "{{report.CounterName}}",
+                        label = "{{SanitizeLabel(report.CounterName)}}",
                     ];
                     node [
                         fontname = "{{_fontName}}",
-                        shape = box,
+                        shape = "box",
                     ];
                     edge [
                         fontname = "{{_fontName}}",
                     ];
                 """);
 
-            var checkpoints = new Dictionary<string, string>();
-            foreach(var (key, transition) in report.CodePathSummaries)
+            var checkpointIdentifiers = report.FoundCheckpoints.Values
+                .ToDictionary(static c => c.Name, static c => SanitizeIdentifier(c.Name));
+            foreach(var checkpoint in report.FoundCheckpoints.Values.OrderBy(static c => c.SortKey))
             {
-                if(!checkpoints.TryGetValue(key.StartCheckpoint, out var sanitizedStart))
-                {
-                    checkpoints.Add(key.StartCheckpoint, sanitizedStart = Sanitize(key.StartCheckpoint));
-                }
-                if(!checkpoints.TryGetValue(key.EndCheckpoint, out var sanitizedEnd))
-                {
-                    checkpoints.Add(key.EndCheckpoint, sanitizedEnd = Sanitize(key.EndCheckpoint));
-                }
+                var identifier = checkpointIdentifiers[checkpoint.Name];
+                var label = SanitizeLabel(checkpoint.Name);
+                writer.WriteLine($$"""
+                        {{identifier}} [label = "{{label}}"]
+                    """);
+            }
+            foreach (var (key, transition) in report.CodePathSummaries)
+            {
+                var startIdentifier = checkpointIdentifiers[key.StartCheckpoint];
+                var endIdentifier = checkpointIdentifiers[key.EndCheckpoint];
                 writer.WriteLine("""
                         {0} -> {1} [label = "{2} times\n{3} msec"]
                     """,
-                    sanitizedStart,
-                    sanitizedEnd,
+                    startIdentifier,
+                    endIdentifier,
                     transition.TotalTimes,
                     transition.MeanDuration.TotalMilliseconds);
             }
-
-            foreach(var (raw, sanitized) in checkpoints)
-            {
-                writer.WriteLine($$"""
-                        {{sanitized}} [label = "{{raw}}"]
-                    """);
-            }
-
             writer.WriteLine("""
                 }
                 """);
         }
 
 
-        private static string Sanitize(string name)
+        public static string SanitizeIdentifier(string name)
         {
             var sb = new StringBuilder();
             sb.Append("__");
-            foreach(var c in name.EnumerateRunes())
+            foreach (var c in name.EnumerateRunes())
             {
-                switch(c.Value)
+                switch (c.Value)
                 {
                 case >= 0x30 and < 0x3A:
                 case >= 0x41 and < 0x5B:
@@ -90,6 +85,33 @@ partial class MethodProfileReportFormatter
                 default:
                     sb.Append($"_u{(uint)c.Value:X04}_");
                     continue;
+                }
+            }
+            return sb.ToString();
+        }
+
+        public static string SanitizeLabel(string name)
+        {
+            var sb = new StringBuilder(name.Length * 2);
+            foreach (var c in name.EnumerateRunes())
+            {
+                switch (c.Value)
+                {
+                case '\n':
+                    sb.Append(@"\n");
+                    break;
+                case '\t':
+                    sb.Append(@"\t");
+                    break;
+                case '\\':
+                    sb.Append(@"\\");
+                    break;
+                case '"':
+                    sb.Append("\\\"");
+                    break;
+                default:
+                    sb.Append(c);
+                    break;
                 }
             }
             return sb.ToString();

@@ -1,3 +1,5 @@
+using System.Runtime.CompilerServices;
+
 namespace PathBench;
 
 /// <summary>
@@ -16,8 +18,9 @@ public abstract class InvocationProfiler : IDisposable
     /// Marks a checkpoint in the invocation.
     /// </summary>
     /// <param name="name"></param>
+    /// <param name="sortKey"></param>
     /// <param name="noteProvider"></param>
-    public abstract void MarkCheckpoint(string name, object? noteProvider = null);
+    public abstract void MarkCheckpoint(string name, [CallerLineNumber] int sortKey = -1, object? noteProvider = null);
 
     /// <summary>
     /// Creates an invocation measurement summary.
