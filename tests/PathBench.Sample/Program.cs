@@ -11,11 +11,10 @@ static class SampleClass
 
     public static async Task InvokeTest()
     {
-        var random = new Random(123456789);
-        for(var i = 0; i < 200; ++i)
+        for (var i = 0; i < 200; ++i)
         {
             Console.Write($"\r        \r{i}");
-            await SimulatedWork(random.Next(0, 20));
+            await SimulatedWork(i);
         }
         Console.WriteLine();
 
@@ -35,12 +34,29 @@ static class SampleClass
         if (seed % 2 == 0)
         {
             counter.MarkCheckpoint("EvenSeed");
-            await Task.Delay(100);
+            await Task.Delay(10);
         }
-        for(var i = 0; i < seed; ++i)
+        else
         {
-            counter.MarkCheckpoint("LoopIteration", new { i });
-            await Task.Delay(1);
+            counter.MarkCheckpoint("OddSeed");
+            await Task.Delay(20);
+        }
+        for (var i = 0; i < seed; ++i)
+        {
+            counter.MarkCheckpoint("LoopBegin", i);
+            if (seed % 3 == 0)
+            {
+                counter.MarkCheckpoint("DivisibleBy3");
+            }
+            if (seed % 5 == 0)
+            {
+                counter.MarkCheckpoint("DivisibleBy5");
+            }
+            if (seed % 7 == 0)
+            {
+                counter.MarkCheckpoint("DivisibleBy7");
+            }
+            counter.MarkCheckpoint("LoopEnd");
         }
     }
 }

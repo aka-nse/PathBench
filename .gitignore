@@ -400,3 +400,6 @@ FodyWeavers.xsd
 # Project extensions
 .dotnet/
 .CodeCoverage/
+
+## repository customizations
+*.lnk
