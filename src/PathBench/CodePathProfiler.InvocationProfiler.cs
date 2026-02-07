@@ -47,10 +47,10 @@ partial class CodePathProfiler
         public override void MarkCheckpoint(string name, object? noteProvider = null) =>
             MarkCheckpoint(name, Owner.Owner.TimeProvider.GetTimestamp(), noteProvider);
 
-        public override InvocationMeasurement CreateMeasurement()
+        internal protected override InvocationMeasurementReport CreateMeasurementReport()
         {
             var path = Checkpoints.Zip(Checkpoints.Skip(1), static (start, end) =>
-                new CheckpointTransitionMeasurement(
+                new CheckpointTransitionMeasurementReport(
                     Key: new CheckpointTransitionKey(start.Name, end.Name),
                     Note: start.NoteProvider?.ToString(),
                     Duration: TimeSpan.FromTicks(end.DurationTimestamp - start.DurationTimestamp)));

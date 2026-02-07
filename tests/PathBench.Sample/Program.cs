@@ -20,26 +20,11 @@ static class SampleClass
         Console.WriteLine();
 
         var reports = _Profiler.CreateProfileReports();
-        foreach(var value in reports.Values)
-        {
-            Console.WriteLine($"Counter: {value.CounterName}");
-            Console.WriteLine($"  Total Invocations: {value.TotalTimes}");
-            Console.WriteLine($"  Mean Duration: {value.MeanDuration.TotalMilliseconds} ms");
-            Console.WriteLine($"  StdDev Duration: {value.StandardDeviationOfDuration.TotalMilliseconds} ms");
-            Console.WriteLine($"  Code Paths:");
-            foreach(var pathSummary in value.CodePathSummaries.Values)
-            {
-                Console.WriteLine($"    {pathSummary.Key.StartCheckpoint} -> {pathSummary.Key.EndCheckpoint}:");
-                Console.WriteLine($"      Total Times: {pathSummary.TotalTimes}");
-                Console.WriteLine($"      Mean Duration: {pathSummary.MeanDuration.TotalMilliseconds} ms");
-                Console.WriteLine($"      StdDev Duration: {pathSummary.StandardDeviationOfDuration.TotalMilliseconds} ms");
-            }
-        }
+        Console.WriteLine(reports[nameof(SimulatedWork)]);
         Console.WriteLine();
         var sw = new StringWriter();
-        MethodProfileReportFormatter.GraphvizStyle.Format(
+        MethodProfileReportFormatter.DefaultGraphvizStyle.Format(
             reports[nameof(SimulatedWork)],
-            provider: null,
             writer: sw);
         Console.WriteLine(sw.ToString());
     }

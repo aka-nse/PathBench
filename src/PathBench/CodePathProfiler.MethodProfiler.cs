@@ -6,15 +6,26 @@ partial class CodePathProfiler
 {
     private class MethodProfiler(CodePathProfiler owner, string? methodName = null)
     {
+        private record struct WorstHistoryKey(double DurationSec, long InvocationId);
+        private sealed class WorstHistoryKeyComparer : IComparer<WorstHistoryKey>
+        {
+            public static WorstHistoryKeyComparer Instance { get; } = new();
+
+            public int Compare(WorstHistoryKey x, WorstHistoryKey y)
+            {
+                var c = x.DurationSec.CompareTo(y.DurationSec);
+                if (c != 0) return c;
+                return x.InvocationId.CompareTo(y.InvocationId);
+            }
+        }
+
         private readonly Lock _lockToken = new();
         private readonly Dictionary<CheckpointTransitionKey, CodePathResult> _CodePathResults = new();
         private readonly Queue<InvocationProfiler_> _RecentHistory = new(owner._recentHistoryCacheSize);
-        private readonly SortedList<double, InvocationProfiler_> _WorstHistory = new(owner._worstHistoryCacheSize);
+        private readonly SortedList<WorstHistoryKey, InvocationProfiler_> _WorstHistory = new(owner._worstHistoryCacheSize, WorstHistoryKeyComparer.Instance);
 
         private long _invocationCount = 0;
-        private long _terminatedInvocationCount = 0;
-        private double _meanDuration_sec = 0;
-        private double _sumSquaredDeviationOfDuration_sec2 = 0;
+        private WelfordStatistics _overallDurations;
 
         public CodePathProfiler Owner => owner;
         public string Name { get; } = $"{owner.ClassName}.{methodName}";
@@ -34,17 +45,12 @@ partial class CodePathProfiler
 
         public void TerminateInvocation(InvocationProfiler_ invocation)
         {
-            // Implementation omitted for brevity.
             using (_lockToken.EnterScope())
             {
                 var x = (double)invocation.Duration / Owner.TimeProvider.TimestampFrequency;
 
                 // update overall statistics
-                InternalHelpers.CalculateStatistics(
-                    x,
-                    n: ref _terminatedInvocationCount,
-                    mu: ref _meanDuration_sec,
-                    ss: ref _sumSquaredDeviationOfDuration_sec2);
+                _overallDurations.IncrementResult(x);
 
                 // update code path report
                 foreach(var (start, end) in invocation.Checkpoints.Zip(invocation.Checkpoints.Skip(1)))
@@ -68,7 +74,7 @@ partial class CodePathProfiler
                 // update worst history
                 if (x < (_WorstHistory.Values.LastOrDefault()?.Duration ?? double.PositiveInfinity))
                 {
-                    _WorstHistory.Add(x, invocation);
+                    _WorstHistory.Add(new(x, invocation.InvocationIndex), invocation);
                     if (_WorstHistory.Count > Owner._worstHistoryCacheSize)
                     {
                         _WorstHistory.RemoveAt(Owner._worstHistoryCacheSize - 1);
@@ -80,29 +86,29 @@ partial class CodePathProfiler
 
         public MethodProfileReport CreateReport()
         {
+            long times;
             double mean_sec;
             double sd_sec;
-            ImmutableDictionary<CheckpointTransitionKey, CheckPointTransitionProfileReport> codePathSummaries;
+            ImmutableDictionary<CheckpointTransitionKey, CheckpointTransitionProfileReport> codePathSummaries;
             InvocationProfiler_[] recentHistory;
             InvocationProfiler_[] worstHistory;
             using (_lockToken.EnterScope())
             {
-                mean_sec = _meanDuration_sec;
-                sd_sec = Math.Sqrt(_sumSquaredDeviationOfDuration_sec2 / Math.Max(1, _terminatedInvocationCount - 1));
+                (times, mean_sec, sd_sec) = _overallDurations;
                 codePathSummaries = _CodePathResults.ToImmutableDictionary(
                     static kv => kv.Key,
                     static kv => kv.Value.CreateSummary());
                 recentHistory = [.. _RecentHistory];
                 worstHistory = [.. _WorstHistory.Values];
             }
-            var histories = ImmutableDictionary.CreateBuilder<HistoryType, ImmutableArray<InvocationMeasurement>>();
-            histories.Add(HistoryType.Recent, [.. recentHistory.Select(static x => x.CreateMeasurement())]);
-            histories.Add(HistoryType.Worst, [.. worstHistory.Select(static x => x.CreateMeasurement())]);
+            var histories = ImmutableDictionary.CreateBuilder<HistoryType, ImmutableArray<InvocationMeasurementReport>>();
+            histories.Add(HistoryType.Recent, [.. recentHistory.Select(static x => x.CreateMeasurementReport())]);
+            histories.Add(HistoryType.Worst, [.. worstHistory.Select(static x => x.CreateMeasurementReport())]);
             return new MethodProfileReport(
                 CounterName: $"{Owner.ClassName}.{methodName}",
-                TotalTimes: _terminatedInvocationCount,
+                TotalTimes: times,
                 MeanDuration: TimeSpan.FromSeconds(mean_sec),
-                StandardDeviationOfDuration: TimeSpan.FromSeconds(sd_sec),
+                StandardDeviationOfDuration: double.IsNaN(sd_sec) ? null : TimeSpan.FromSeconds(sd_sec),
                 CodePathSummaries: codePathSummaries,
                 Histories: histories.ToImmutable());
         }
@@ -111,21 +117,15 @@ partial class CodePathProfiler
         private class CodePathResult(CheckpointTransitionKey key)
         {
             public CheckpointTransitionKey Key { get; } = key;
-            private long _totalTimes;
-            private double _meanDuration_sec;
-            private double _sumSquaredDeviationOfDuration_sec2;
+            private WelfordStatistics _durations;
 
             public void IncrementResult(double duration_sec) =>
-                InternalHelpers.CalculateStatistics(
-                    duration_sec,
-                    n: ref _totalTimes,
-                    mu: ref _meanDuration_sec,
-                    ss: ref _sumSquaredDeviationOfDuration_sec2);
+                _durations.IncrementResult(duration_sec);
 
-            public CheckPointTransitionProfileReport CreateSummary()
+            public CheckpointTransitionProfileReport CreateSummary()
             {
-                var sd = Math.Sqrt(_sumSquaredDeviationOfDuration_sec2 / Math.Max(1, _totalTimes - 1));
-                return new( Key, _totalTimes, TimeSpan.FromSeconds(_meanDuration_sec), TimeSpan.FromSeconds(sd));
+                var (times, mean_sec, sd_sec) = _durations;
+                return new( Key, times, TimeSpan.FromSeconds(mean_sec), double.IsNaN(sd_sec) ? null : TimeSpan.FromSeconds(sd_sec));
             }
         }
     }

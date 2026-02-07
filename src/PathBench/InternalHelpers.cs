@@ -29,12 +29,4 @@ internal static class InternalHelpers
             }
         }
     }
-
-
-    public static void CalculateStatistics(double x, ref long n, ref double mu, ref double ss)
-    {
-        ss = ss + n / (n + 1.0) * (x - mu) * (x - mu);
-        mu = mu + (x - mu) / (n + 1.0);
-        n++;
-    }
 }

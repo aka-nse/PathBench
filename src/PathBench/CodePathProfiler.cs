@@ -18,8 +18,8 @@ public partial class CodePathProfiler(
     /// <summary> The name of the end checkpoint. </summary>
     public const string EndCheckpointName = "#<end>";
 
-    private readonly int _recentHistoryCacheSize = options?.RecentHistoryCacheSize ?? CodePathProfilerOptions.DefaultRecentHistoryCacheSize;
-    private readonly int _worstHistoryCacheSize = options?.WorstHistoryCacheSize ?? CodePathProfilerOptions.DefaultWorstHistoryCacheSize;
+    private readonly int _recentHistoryCacheSize = (options ?? CodePathProfilerOptions.Default).RecentHistoryCacheSize;
+    private readonly int _worstHistoryCacheSize = (options ?? CodePathProfilerOptions.Default).WorstHistoryCacheSize;
 
     private ImmutableDictionary<string, MethodProfiler> _methodCounters = ImmutableDictionary<string, MethodProfiler>.Empty;
 

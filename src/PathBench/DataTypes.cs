@@ -8,7 +8,14 @@ namespace PathBench;
 [Flags]
 public enum HistoryType
 {
+    /// <summary>
+    /// Recent invocation measurements.
+    /// </summary>
     Recent,
+
+    /// <summary>
+    /// Worst-performance invocation measurements.
+    /// </summary>
     Worst,
 }
 
@@ -34,30 +41,61 @@ public record class MethodProfileReport(
     string CounterName,
     long TotalTimes,
     TimeSpan MeanDuration,
-    TimeSpan StandardDeviationOfDuration,
-    ImmutableDictionary<CheckpointTransitionKey, CheckPointTransitionProfileReport> CodePathSummaries,
-    ImmutableDictionary<HistoryType, ImmutableArray<InvocationMeasurement>> Histories
-    );
+    TimeSpan? StandardDeviationOfDuration,
+    ImmutableDictionary<CheckpointTransitionKey, CheckpointTransitionProfileReport> CodePathSummaries,
+    ImmutableDictionary<HistoryType, ImmutableArray<InvocationMeasurementReport>> Histories
+    )
+{
+    /// <inheritdoc />
+    public override string ToString()
+    {
+        var sw = new StringWriter();
+        MethodProfileReportFormatter.Simple.Format(
+            this,
+            sw);
+        return sw.ToString();
+    }
+}
 
-
-public record class CheckPointTransitionProfileReport(
+/// <summary>
+/// Summary of performance measurements for a specific two checkpoint transition.
+/// </summary>
+/// <param name="Key"></param>
+/// <param name="TotalTimes"></param>
+/// <param name="MeanDuration"></param>
+/// <param name="StandardDeviationOfDuration"></param>
+public record class CheckpointTransitionProfileReport(
     CheckpointTransitionKey Key,
     long TotalTimes,
     TimeSpan MeanDuration,
-    TimeSpan StandardDeviationOfDuration);
+    TimeSpan? StandardDeviationOfDuration);
 
-
-public record class InvocationMeasurement(
+/// <summary>
+/// Summary of one invocation measurement.
+/// </summary>
+/// <param name="CounterName"></param>
+/// <param name="InvocationId"></param>
+/// <param name="StartAt"></param>
+/// <param name="ManagedThreadId"></param>
+/// <param name="ArgumentsExpression"></param>
+/// <param name="Duration"></param>
+/// <param name="CodePathMeasurements"></param>
+public record class InvocationMeasurementReport(
     string CounterName,
     long InvocationId,
     DateTimeOffset StartAt,
     int ManagedThreadId,
     string? ArgumentsExpression,
     TimeSpan Duration,
-    ImmutableArray<CheckpointTransitionMeasurement> CodePathMeasurements);
+    ImmutableArray<CheckpointTransitionMeasurementReport> CodePathMeasurements);
 
-
-public record class CheckpointTransitionMeasurement(
+/// <summary>
+/// Summary of one checkpoint transition measurement.
+/// </summary>
+/// <param name="Key"></param>
+/// <param name="Note"></param>
+/// <param name="Duration"></param>
+public record class CheckpointTransitionMeasurementReport(
     CheckpointTransitionKey Key,
     string? Note,
     TimeSpan Duration);

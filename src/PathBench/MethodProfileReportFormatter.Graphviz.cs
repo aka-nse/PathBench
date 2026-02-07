@@ -4,17 +4,27 @@ namespace PathBench;
 
 partial class MethodProfileReportFormatter
 {
-#warning implement font customization
-    public static MethodProfileReportFormatter GraphvizStyle { get; } = new GraphvizStyle_();
+    /// <summary>
+    /// Gets the graphviz visualization style formatter with default settings.
+    /// </summary>
+    public static MethodProfileReportFormatter DefaultGraphvizStyle { get; } =
+        new GraphvizStyle_(GraphvizStyleFormatterOptions.Default);
 
-    private sealed class GraphvizStyle_ : MethodProfileReportFormatter
+    /// <summary>
+    /// Creates a graphviz visualization style formatter with the specified options.
+    /// </summary>
+    /// <param name="options"></param>
+    /// <returns></returns>
+    public static MethodProfileReportFormatter CreateGraphvizStyle(
+        GraphvizStyleFormatterOptions? options = null) =>
+        new GraphvizStyle_(options ?? GraphvizStyleFormatterOptions.Default);
+
+    private sealed class GraphvizStyle_(IGraphvizStyleFormatterOptions options)
+        : MethodProfileReportFormatter
     {
-        private readonly string _fontName = "Consolas";
+        private readonly string _fontName = options.FontName;
 
-        public override void Format(
-            MethodProfileReport report,
-            IFormatProvider? provider,
-            TextWriter writer)
+        public override void Format(MethodProfileReport report, TextWriter writer)
         {
             writer.WriteLine($$"""
                 digraph {{Sanitize(report.CounterName)}} {
@@ -42,9 +52,13 @@ partial class MethodProfileReportFormatter
                 {
                     checkpoints.Add(key.EndCheckpoint, sanitizedEnd = Sanitize(key.EndCheckpoint));
                 }
-                writer.WriteLine($$"""
-                        {{sanitizedStart}} -> {{sanitizedEnd}} [label = "{{transition.TotalTimes}} times\n{{transition.MeanDuration.TotalMilliseconds}} msec"]
-                    """);
+                writer.WriteLine("""
+                        {0} -> {1} [label = "{2} times\n{3} msec"]
+                    """,
+                    sanitizedStart,
+                    sanitizedEnd,
+                    transition.TotalTimes,
+                    transition.MeanDuration.TotalMilliseconds);
             }
 
             foreach(var (raw, sanitized) in checkpoints)
@@ -74,11 +88,38 @@ partial class MethodProfileReportFormatter
                     sb.Append(c);
                     continue;
                 default:
-                    sb.Append($"_U{(uint)c.Value:X02}_");
+                    sb.Append($"_u{(uint)c.Value:X04}_");
                     continue;
                 }
             }
             return sb.ToString();
         }
     }
+}
+
+
+/// <summary>
+/// Provides configuration options for formatting styles in Graphviz output.
+/// </summary>
+public interface IGraphvizStyleFormatterOptions
+{
+    /// <summary>
+    /// Specifies the font name to use in the graphviz output.
+    /// </summary>
+    public string FontName { get; }
+}
+
+/// <summary>
+/// Provides configuration options for formatting styles in Graphviz output.
+/// </summary>
+public class GraphvizStyleFormatterOptions : IGraphvizStyleFormatterOptions
+{
+    private sealed class Default_ : IGraphvizStyleFormatterOptions
+    {
+        public string FontName => "Monospace";
+    }
+    internal static IGraphvizStyleFormatterOptions Default { get; } = new Default_();
+
+    /// <inheritdoc />
+    public string FontName { get; set; } = Default.FontName;
 }
