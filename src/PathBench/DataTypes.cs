@@ -35,7 +35,13 @@ public record class CheckpointMetadata(
 /// <param name="EndCheckpoint"></param>
 public record struct CheckpointTransitionKey(
     string StartCheckpoint,
-    string EndCheckpoint);
+    string EndCheckpoint)
+{
+    public override int GetHashCode()
+    {
+        return StartCheckpoint.GetHashCode() ^ EndCheckpoint.GetHashCode();
+    }
+}
 
 /// <summary>
 /// Summary of method performance measurements.

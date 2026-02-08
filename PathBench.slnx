@@ -4,6 +4,7 @@
     <Project Path="src/PathBench/PathBench.csproj" Id="69a8b74a-08f8-4934-80d8-229c5248a29a" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/PathBench.Benchmark/PathBench.Benchmark.csproj" Id="6ce93543-91f0-4dae-8cf1-969708140bba" />
     <Project Path="tests/PathBench.Sample/PathBench.Sample.csproj" Id="bb79d7c3-187b-428c-8b10-1e932f95b53c" />
     <Project Path="tests/PathBench.Test/PathBench.Test.csproj" Id="7fd1eb49-af7b-4162-b3de-ac73f22b2af2" />
   </Folder>

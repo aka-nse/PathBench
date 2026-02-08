@@ -33,7 +33,7 @@ public class CodePathProfilerTest
     {
         static IEnumerable<ValueTuple> profileTarget(CodePathProfiler codePathProfiler)
         {
-            using var profiler = codePathProfiler.StartMeasurement(nameof(profileTarget));
+            using var profiler = codePathProfiler.StartMeasurement();
             yield return default;
             profiler.MarkCheckpoint("checkpoint1");
             yield return default;
@@ -47,7 +47,7 @@ public class CodePathProfilerTest
         const double sdTolerance = 1e-4;
 
         var timeProvider = new FakeTimeProvider();
-        var codePathProfiler = new CodePathProfiler("SampleClassName", new() { TimeProvider = timeProvider, });
+        var codePathProfiler = CodePathProfiler.Create("SampleClassName", new() { TimeProvider = timeProvider, });
         for(var k = 0; k < timeSet.Length; ++k)
         {
             var time = timeSet[k];

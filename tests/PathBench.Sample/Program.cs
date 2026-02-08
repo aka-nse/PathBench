@@ -1,20 +1,24 @@
 // See https://aka.ms/new-console-template for more information
+using System.Runtime.CompilerServices;
 using PathBench;
 
-await SampleClass.InvokeTest();
-Console.WriteLine("Hello, World!");
+for(var i = 0; i < (1 << 18); ++i)
+{
+    SampleClass.EmptyWork();
+}
+// SampleClass.InvokeTest();
 
 
 static class SampleClass
 {
-    public static readonly CodePathProfiler _Profiler = new();
+    public static readonly CodePathProfiler _Profiler = CodePathProfiler.Create();
 
-    public static async Task InvokeTest()
+    public static void InvokeTest()
     {
-        for (var i = 0; i < 200; ++i)
+        for (var i = 0; i < 1000; ++i)
         {
             Console.Write($"\r        \r{i}");
-            await SimulatedWork(i);
+            SimulatedWork(i);
         }
         Console.WriteLine();
 
@@ -28,18 +32,31 @@ static class SampleClass
         Console.WriteLine(sw.ToString());
     }
 
-    private static async Task SimulatedWork(int seed)
+    public static void EmptyWork()
+    {
+        var counter = _Profiler.StartMeasurement();
+        try
+        {
+            DisturbOptimize(0);
+        }
+        finally
+        {
+            counter.Dispose();
+        }
+    }
+
+    private static void SimulatedWork(int seed)
     {
         using var counter = _Profiler.StartMeasurement(argumentsExpressionProvider: $"seed={seed}");
         if (seed % 2 == 0)
         {
             counter.MarkCheckpoint("EvenSeed");
-            await Task.Delay(10);
+            DisturbOptimize(2);
         }
         else
         {
             counter.MarkCheckpoint("OddSeed");
-            await Task.Delay(20);
+            DisturbOptimize(0);
         }
         for (var i = 0; i < seed; ++i)
         {
@@ -47,16 +64,24 @@ static class SampleClass
             if (seed % 3 == 0)
             {
                 counter.MarkCheckpoint("DivisibleBy3");
+                DisturbOptimize(3);
             }
             if (seed % 5 == 0)
             {
                 counter.MarkCheckpoint("DivisibleBy5");
+                DisturbOptimize(5);
             }
             if (seed % 7 == 0)
             {
                 counter.MarkCheckpoint("DivisibleBy7");
+                DisturbOptimize(7);
             }
             counter.MarkCheckpoint("LoopEnd");
         }
+    }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static void DisturbOptimize(int value)
+    {
     }
 }
