@@ -11,6 +11,7 @@ partial class CodePathProfiler
         private readonly int _recentHistoryCacheSize;
         private readonly int _worstHistoryCacheSize;
 
+        private readonly object _lockToken = new();
         private ImmutableDictionary<string, MethodProfiler> _methodCounters = [];
 
         public override string? ClassName { get; }
@@ -31,9 +32,20 @@ partial class CodePathProfiler
             [CallerMemberName] string methodName = "",
             object? argumentsExpressionProvider = null)
         {
-            if(!_methodCounters.TryGetValue(methodName, out var methodCounter))
+            // NOTE:
+            //   Double-checked locking pattern is used here to reduce locking overhead.
+            //   For optimization of hot path, we don't use memory barrier on the first read.
+            if (!_methodCounters.TryGetValue(methodName, out var methodCounter))
             {
-                _methodCounters.Add(methodName, methodCounter = new(this, methodName));
+                lock(_lockToken)
+                {
+                    var methodCounters = Volatile.Read(ref _methodCounters);
+                    if (!methodCounters.TryGetValue(methodName, out methodCounter))
+                    {
+                        methodCounter = new(this, methodName);
+                        _methodCounters = methodCounters.Add(methodName, methodCounter);
+                    }
+                }
             }
             var invocation = methodCounter.StartMeasurement(argumentsExpressionProvider);
             return invocation;
