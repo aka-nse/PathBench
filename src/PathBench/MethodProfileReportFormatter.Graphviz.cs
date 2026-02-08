@@ -23,9 +23,22 @@ partial class MethodProfileReportFormatter
         : MethodProfileReportFormatter
     {
         private readonly string _fontName = options.FontName;
+        private readonly TimeScale _timeScale = options.TimeScale switch
+        {
+            TimeScale.Auto or
+            TimeScale.Nanoseconds or
+            TimeScale.Microseconds or
+            TimeScale.Milliseconds => options.TimeScale,
+            _ => throw new ArgumentOutOfRangeException(nameof(options.TimeScale)),
+        };
 
         public override void Format(MethodProfileReport report, TextWriter writer)
         {
+            var adjustedTimeScale =
+                _timeScale == TimeScale.Auto
+                ? TimeScale.SelectAuto(report.CodePathSummaries.Values.Select(static x => x.MeanDuration))
+                : _timeScale;
+
             writer.WriteLine($$"""
                 digraph {{SanitizeIdentifier(report.CounterName)}} {
                     graph [
@@ -56,12 +69,12 @@ partial class MethodProfileReportFormatter
                 var startIdentifier = checkpointIdentifiers[key.StartCheckpoint];
                 var endIdentifier = checkpointIdentifiers[key.EndCheckpoint];
                 writer.WriteLine("""
-                        {0} -> {1} [label = "{2} times\n{3} msec"]
+                        {0} -> {1} [label = "{2} times\n{3}"]
                     """,
                     startIdentifier,
                     endIdentifier,
                     transition.TotalTimes,
-                    transition.MeanDuration.TotalMilliseconds);
+                    adjustedTimeScale.ToString(transition.MeanDuration));
             }
             writer.WriteLine("""
                 }
@@ -129,6 +142,11 @@ public interface IGraphvizStyleFormatterOptions
     /// Specifies the font name to use in the graphviz output.
     /// </summary>
     public string FontName { get; }
+
+    /// <summary>
+    /// Specifies the time scale to display measurement results.
+    /// </summary>
+    public TimeScale TimeScale { get; }
 }
 
 /// <summary>
@@ -139,9 +157,13 @@ public class GraphvizStyleFormatterOptions : IGraphvizStyleFormatterOptions
     private sealed class Default_ : IGraphvizStyleFormatterOptions
     {
         public string FontName => "Monospace";
+        public TimeScale TimeScale => TimeScale.Auto;
     }
     internal static IGraphvizStyleFormatterOptions Default { get; } = new Default_();
 
     /// <inheritdoc />
     public string FontName { get; set; } = Default.FontName;
+
+    /// <inheritdoc />
+    public TimeScale TimeScale { get; set; } = Default.TimeScale;
 }

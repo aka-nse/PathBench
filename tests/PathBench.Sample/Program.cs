@@ -2,11 +2,8 @@
 using System.Runtime.CompilerServices;
 using PathBench;
 
-for(var i = 0; i < (1 << 18); ++i)
-{
-    SampleClass.EmptyWork();
-}
-// SampleClass.InvokeTest();
+
+SampleClass.InvokeTest();
 
 
 static class SampleClass
@@ -30,19 +27,6 @@ static class SampleClass
             reports[nameof(SimulatedWork)],
             writer: sw);
         Console.WriteLine(sw.ToString());
-    }
-
-    public static void EmptyWork()
-    {
-        var counter = _Profiler.StartMeasurement();
-        try
-        {
-            DisturbOptimize(0);
-        }
-        finally
-        {
-            counter.Dispose();
-        }
     }
 
     private static void SimulatedWork(int seed)
@@ -83,5 +67,6 @@ static class SampleClass
     [MethodImpl(MethodImplOptions.NoInlining)]
     private static void DisturbOptimize(int value)
     {
+        Thread.SpinWait(value * 100);
     }
 }
