@@ -2,7 +2,7 @@ namespace PathBench.Test;
 
 internal static class TestHelpers
 {
-    public static (long time, double mean, double sd) CalculateMeanAndSd(IEnumerable<double> values)
+    public static (long time, double mean, double sd) CalculateMeanAndSD(IEnumerable<double> values)
     {
         var time = values.Count();
         var mean = values.Average();
