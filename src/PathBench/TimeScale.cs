@@ -19,18 +19,49 @@ public enum TimeScale
 }
 
 
-internal static class  TimeScaleExtensions
+/// <summary>
+/// Provides extension methods for <see cref="TimeScale"/>.
+/// </summary>
+public static class TimeScaleExtensions
 {
     extension(TimeScale timeScale)
     {
-        public static TimeScale SelectAuto(IEnumerable<TimeSpan> timeSpans)
+        /// <summary>
+        /// Gets the best time scale for the given time spans.
+        /// </summary>
+        /// <param name="timeSpans"></param>
+        /// <returns></returns>
+        /// <remarks>
+        /// The best time scale is determined by the smallest time span in the collection.
+        /// <list type="bullet">
+        /// <item>If minimum time span is greater than sub-msec(>= 0.1msec), <see cref="TimeScale.Milliseconds"/> will be selected. </item>
+        /// <item>If minimum time span is greater than sub-usec(>= 0.1usec), <see cref="TimeScale.Microseconds"/> will be selected. </item>
+        /// <item>Otherwise, <see cref="TimeScale.Nanoseconds"/> will be selected. </item>
+        /// </list>
+        /// </remarks>
+        public static TimeScale GetBestTimeScaleFor(IEnumerable<PreciseDuration> timeSpans) =>
+            GetBestTimeScaleFor(timeSpans.Min());
+
+        /// <summary>
+        /// Gets the best time scale for the given duration.
+        /// </summary>
+        /// <param name="duration"></param>
+        /// <returns></returns>
+        /// <remarks>
+        /// The best time scale is determined by the smallest time span in the collection.
+        /// <list type="bullet">
+        /// <item>If duration is greater than sub-msec(>= 0.1msec), <see cref="TimeScale.Milliseconds"/> will be selected. </item>
+        /// <item>If duration is greater than sub-usec(>= 0.1usec), <see cref="TimeScale.Microseconds"/> will be selected. </item>
+        /// <item>Otherwise, <see cref="TimeScale.Nanoseconds"/> will be selected. </item>
+        /// </list>
+        /// </remarks>
+        public static TimeScale GetBestTimeScaleFor(PreciseDuration duration)
         {
-            var minTime = timeSpans.Where(static x => x > TimeSpan.Zero).Min();
-            if (minTime.TotalMilliseconds >= 0.1)
+            if (duration.TotalMilliseconds >= 0.1)
             {
                 return TimeScale.Milliseconds;
             }
-            else if (minTime.TotalMicroseconds >= 0.1)
+            else if (duration.TotalMicroseconds >= 0.1)
             {
                 return TimeScale.Microseconds;
             }
@@ -39,14 +70,5 @@ internal static class  TimeScaleExtensions
                 return TimeScale.Nanoseconds;
             }
         }
-
-        public string GetString(TimeSpan time) =>
-            timeScale switch
-            {
-                TimeScale.Nanoseconds => $"{time.TotalNanoseconds} nsec",
-                TimeScale.Microseconds => $"{time.TotalMicroseconds} usec",
-                TimeScale.Milliseconds => $"{time.TotalMilliseconds} msec",
-                _ => string.Empty,
-            };
     }
 }

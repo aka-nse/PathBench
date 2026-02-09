@@ -14,7 +14,7 @@ partial class MethodProfileReportFormatter
         public override void Format(MethodProfileReport report, TextWriter writer)
         {
             var timeSpans = report.CodePathSummaries.Values.Select(static x => x.MeanDuration);
-            var adjustedTimeScale = TimeScale.SelectAuto(timeSpans);
+            var adjustedTimeScale = TimeScale.GetBestTimeScaleFor(timeSpans);
 
             writer.WriteLine($"<`{report.CounterName}` profile report>");
             writer.WriteLine($"  total invocation   : {report.TotalTimes}");
@@ -27,10 +27,10 @@ partial class MethodProfileReportFormatter
                 writer.WriteLine($"      mean duration   : {getDurationText(adjustedTimeScale, pathSummary.Value.MeanDuration, pathSummary.Value.StandardDeviationOfDuration)}");
             }
 
-            string getDurationText(TimeScale scale, TimeSpan meanDuration, TimeSpan? standardDeviationOfDuration)
+            string getDurationText(TimeScale scale, PreciseDuration meanDuration, PreciseDuration? standardDeviationOfDuration)
             {
-                var mean = scale.GetString(meanDuration);
-                var sd = standardDeviationOfDuration.HasValue ? scale.GetString(standardDeviationOfDuration.Value) : "N/A";
+                var mean = meanDuration.ToString(scale);
+                var sd = standardDeviationOfDuration.HasValue ? standardDeviationOfDuration.Value.ToString(scale) : "N/A";
                 return $"{mean} (SD = {sd})";
             }
         }

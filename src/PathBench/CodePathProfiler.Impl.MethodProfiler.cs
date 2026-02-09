@@ -117,8 +117,8 @@ partial class CodePathProfiler
                 return new MethodProfileReport(
                     CounterName: $"{Owner.ClassName}.{methodName}",
                     TotalTimes: times,
-                    MeanDuration: TimeSpan.FromSeconds(mean_sec),
-                    StandardDeviationOfDuration: double.IsNaN(sd_sec) ? null : TimeSpan.FromSeconds(sd_sec),
+                    MeanDuration: PreciseDuration.FromSeconds(mean_sec),
+                    StandardDeviationOfDuration: PreciseDuration.FromSeconds(sd_sec),
                     FoundCheckpoints: foundCheckpoints.ToImmutable(),
                     CodePathSummaries: codePathSummaries.ToImmutable(),
                     Histories: histories.ToImmutable());
@@ -138,7 +138,7 @@ partial class CodePathProfiler
                 public CheckpointTransitionProfileReport CreateSummary()
                 {
                     var (times, mean_sec, sd_sec) = _durations;
-                    return new(Key, times, TimeSpan.FromSeconds(mean_sec), double.IsNaN(sd_sec) ? null : TimeSpan.FromSeconds(sd_sec));
+                    return new(Key, times, PreciseDuration.FromSeconds(mean_sec), PreciseDuration.FromSeconds(sd_sec));
                 }
             }
         }

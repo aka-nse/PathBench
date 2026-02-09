@@ -56,14 +56,14 @@ partial class CodePathProfiler
                     new CheckpointTransitionMeasurementReport(
                         Key: new CheckpointTransitionKey(start.Name, end.Name),
                         Note: start.NoteProvider?.ToString(),
-                        Duration: TimeSpan.FromTicks(end.DurationTimestamp - start.DurationTimestamp)));
+                        Duration: new PreciseDuration(end.DurationTimestamp - start.DurationTimestamp)));
                 return new(
                     CounterName: Name,
                     InvocationId: InvocationIndex,
                     StartAt: StartAt,
                     ManagedThreadId: ManagedThreadId,
                     ArgumentsExpression: ArgumentsExpressionProvider?.ToString(),
-                    Duration: TimeSpan.FromTicks(Duration),
+                    Duration: new PreciseDuration(Duration),
                     CodePathMeasurements: [.. path]);
             }
 

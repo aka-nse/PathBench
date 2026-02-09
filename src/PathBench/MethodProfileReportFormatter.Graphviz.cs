@@ -36,7 +36,7 @@ partial class MethodProfileReportFormatter
         {
             var adjustedTimeScale =
                 _timeScale == TimeScale.Auto
-                ? TimeScale.SelectAuto(report.CodePathSummaries.Values.Select(static x => x.MeanDuration))
+                ? TimeScale.GetBestTimeScaleFor(report.CodePathSummaries.Values.Select(static x => x.MeanDuration))
                 : _timeScale;
 
             writer.WriteLine($$"""
@@ -74,7 +74,7 @@ partial class MethodProfileReportFormatter
                     startIdentifier,
                     endIdentifier,
                     transition.TotalTimes,
-                    adjustedTimeScale.GetString(transition.MeanDuration));
+                    transition.MeanDuration.ToString(adjustedTimeScale));
             }
             writer.WriteLine("""
                 }

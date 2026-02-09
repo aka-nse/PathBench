@@ -63,7 +63,7 @@ public class CodePathProfilerTest
             Assert.Equal($"SampleClassName.{nameof(ProfileTarget)}", report.CounterName);
             Assert.Equal(statWhole.time, report.TotalTimes);
             Assert.Equal(statWhole.mean, report.MeanDuration.TotalSeconds, meanTolerance);
-            Assert.Equal(statWhole.sd, report.StandardDeviationOfDuration?.TotalSeconds ?? double.NaN, sdTolerance);
+            Assert.Equal(statWhole.sd, report.StandardDeviationOfDuration.TotalSeconds, sdTolerance);
             Assert.True(report.CodePathSummaries.TryGetValue(new (CodePathProfiler.StartCheckpointName, "checkpoint1"), out var trn1));
             Assert.True(report.CodePathSummaries.TryGetValue(new ("checkpoint1", "checkpoint2"), out var trn2));
             Assert.True(report.CodePathSummaries.TryGetValue(new ("checkpoint2", "checkpoint3"), out var trn3));
@@ -80,10 +80,10 @@ public class CodePathProfilerTest
             Assert.Equal(statSection_1_2.mean, trn2.MeanDuration.TotalSeconds, meanTolerance);
             Assert.Equal(statSection_2_3.mean, trn3.MeanDuration.TotalSeconds, meanTolerance);
             Assert.Equal(statSection_3_e.mean, trn4.MeanDuration.TotalSeconds, meanTolerance);
-            Assert.Equal(statSection_s_1.sd, trn1.StandardDeviationOfDuration?.TotalSeconds ?? double.NaN, sdTolerance);
-            Assert.Equal(statSection_1_2.sd, trn2.StandardDeviationOfDuration?.TotalSeconds ?? double.NaN, sdTolerance);
-            Assert.Equal(statSection_2_3.sd, trn3.StandardDeviationOfDuration?.TotalSeconds ?? double.NaN, sdTolerance);
-            Assert.Equal(statSection_3_e.sd, trn4.StandardDeviationOfDuration?.TotalSeconds ?? double.NaN, sdTolerance);
+            Assert.Equal(statSection_s_1.sd, trn1.StandardDeviationOfDuration.TotalSeconds, sdTolerance);
+            Assert.Equal(statSection_1_2.sd, trn2.StandardDeviationOfDuration.TotalSeconds, sdTolerance);
+            Assert.Equal(statSection_2_3.sd, trn3.StandardDeviationOfDuration.TotalSeconds, sdTolerance);
+            Assert.Equal(statSection_3_e.sd, trn4.StandardDeviationOfDuration.TotalSeconds, sdTolerance);
         }
     }
 

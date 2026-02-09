@@ -31,7 +31,7 @@ public class CheckpointTransitionProfileReportComparer
         {
             return false;
         }
-        if (!RealComparer.Equals(x.StandardDeviationOfDuration?.TotalSeconds ?? double.NaN, y.StandardDeviationOfDuration?.TotalSeconds ?? double.NaN, 1e-12))
+        if (!RealComparer.Equals(x.StandardDeviationOfDuration.TotalSeconds, y.StandardDeviationOfDuration.TotalSeconds, 1e-12))
         {
             return false;
         }

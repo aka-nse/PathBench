@@ -59,8 +59,8 @@ public record struct CheckpointTransitionKey(
 public record class MethodProfileReport(
     string CounterName,
     long TotalTimes,
-    TimeSpan MeanDuration,
-    TimeSpan? StandardDeviationOfDuration,
+    PreciseDuration MeanDuration,
+    PreciseDuration StandardDeviationOfDuration,
     ImmutableDictionary<string, CheckpointMetadata> FoundCheckpoints,
     ImmutableDictionary<CheckpointTransitionKey, CheckpointTransitionProfileReport> CodePathSummaries,
     ImmutableDictionary<HistoryType, ImmutableArray<InvocationMeasurementReport>> Histories
@@ -87,8 +87,8 @@ public record class MethodProfileReport(
 public record class CheckpointTransitionProfileReport(
     CheckpointTransitionKey Key,
     long TotalTimes,
-    TimeSpan MeanDuration,
-    TimeSpan? StandardDeviationOfDuration);
+    PreciseDuration MeanDuration,
+    PreciseDuration StandardDeviationOfDuration);
 
 /// <summary>
 /// Summary of one invocation measurement.
@@ -106,7 +106,7 @@ public record class InvocationMeasurementReport(
     DateTimeOffset StartAt,
     int ManagedThreadId,
     string? ArgumentsExpression,
-    TimeSpan Duration,
+    PreciseDuration Duration,
     ImmutableArray<CheckpointTransitionMeasurementReport> CodePathMeasurements);
 
 /// <summary>
@@ -118,5 +118,5 @@ public record class InvocationMeasurementReport(
 public record class CheckpointTransitionMeasurementReport(
     CheckpointTransitionKey Key,
     string? Note,
-    TimeSpan Duration);
+    PreciseDuration Duration);
 
