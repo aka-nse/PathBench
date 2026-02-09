@@ -41,7 +41,7 @@ partial class CodePathProfiler
 
             public override void Dispose()
             {
-                _endAtTimestamp = TimeProvider.GetTimestamp();
+                Volatile.Write(ref _endAtTimestamp, TimeProvider.GetTimestamp());
                 MarkCheckpoint(EndCheckpointName, int.MaxValue, null);
                 (_freezedCheckpoints, _checkpoints) = (_checkpoints, null);
                 Owner.TerminateInvocation(this);

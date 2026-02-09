@@ -40,7 +40,7 @@ internal static class  TimeScaleExtensions
             }
         }
 
-        public string ToString(TimeSpan time) =>
+        public string GetString(TimeSpan time) =>
             timeScale switch
             {
                 TimeScale.Nanoseconds => $"{time.TotalNanoseconds} nsec",

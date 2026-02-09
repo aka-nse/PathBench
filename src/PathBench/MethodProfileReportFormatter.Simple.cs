@@ -13,15 +13,25 @@ partial class MethodProfileReportFormatter
     {
         public override void Format(MethodProfileReport report, TextWriter writer)
         {
+            var timeSpans = report.CodePathSummaries.Values.Select(static x => x.MeanDuration);
+            var adjustedTimeScale = TimeScale.SelectAuto(timeSpans);
+
             writer.WriteLine($"<`{report.CounterName}` profile report>");
             writer.WriteLine($"  total invocation   : {report.TotalTimes}");
-            writer.WriteLine($"  mean duration      : {report.MeanDuration.TotalMilliseconds} msec (SD = {report.StandardDeviationOfDuration?.TotalMilliseconds ?? double.NaN})");
+            writer.WriteLine($"  mean duration      : {getDurationText(adjustedTimeScale, report.MeanDuration, report.StandardDeviationOfDuration)}");
             writer.WriteLine($"  code path summaries:");
             foreach(var pathSummary in report.CodePathSummaries)
             {
                 writer.WriteLine($"    {pathSummary.Key}:");
                 writer.WriteLine($"      total invocation: {pathSummary.Value.TotalTimes}");
-                writer.WriteLine($"      mean duration   : {pathSummary.Value.MeanDuration.TotalMilliseconds} msec (SD = {pathSummary.Value.StandardDeviationOfDuration?.TotalMilliseconds ?? double.NaN})");
+                writer.WriteLine($"      mean duration   : {getDurationText(adjustedTimeScale, pathSummary.Value.MeanDuration, pathSummary.Value.StandardDeviationOfDuration)}");
+            }
+
+            string getDurationText(TimeScale scale, TimeSpan meanDuration, TimeSpan? standardDeviationOfDuration)
+            {
+                var mean = scale.GetString(meanDuration);
+                var sd = standardDeviationOfDuration.HasValue ? scale.GetString(standardDeviationOfDuration.Value) : "N/A";
+                return $"{mean} (SD = {sd})";
             }
         }
     }

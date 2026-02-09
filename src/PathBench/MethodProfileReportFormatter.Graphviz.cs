@@ -74,7 +74,7 @@ partial class MethodProfileReportFormatter
                     startIdentifier,
                     endIdentifier,
                     transition.TotalTimes,
-                    adjustedTimeScale.ToString(transition.MeanDuration));
+                    adjustedTimeScale.GetString(transition.MeanDuration));
             }
             writer.WriteLine("""
                 }

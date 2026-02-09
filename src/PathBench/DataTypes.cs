@@ -37,10 +37,13 @@ public record struct CheckpointTransitionKey(
     string StartCheckpoint,
     string EndCheckpoint)
 {
-    public override int GetHashCode()
-    {
-        return StartCheckpoint.GetHashCode() ^ EndCheckpoint.GetHashCode();
-    }
+    /// <inheritdoc />
+    public override readonly string ToString() =>
+        $"[{StartCheckpoint} -> {EndCheckpoint}]";
+
+    /// <inheritdoc />
+    public override readonly int GetHashCode() =>
+        StartCheckpoint.GetHashCode() ^ EndCheckpoint.GetHashCode();
 }
 
 /// <summary>
