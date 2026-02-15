@@ -1,41 +1,43 @@
 using System.Numerics;
+using System.Text.RegularExpressions;
 
 namespace PathBench;
 
 /// <summary>
 /// Provides pico-order precise duration representation.
 /// </summary>
-public readonly struct PreciseDuration(long ticks)
+public readonly partial struct PreciseDuration(long ticks)
     : IEquatable<PreciseDuration>
     , IComparable<PreciseDuration>
     , IComparisonOperators<PreciseDuration, PreciseDuration, bool>
     , IAdditionOperators<PreciseDuration, PreciseDuration, PreciseDuration>
     , ISubtractionOperators<PreciseDuration, PreciseDuration, PreciseDuration>
+    , IFormattable
 {
     /// <summary>
     /// Represents a Not-a-Number (NaN) value of ticks in <see cref="PreciseDuration"/>.
     /// </summary>
-    public const long NaNValue = long.MinValue;
+    public const long NaNTicks = long.MinValue;
 
     /// <summary>
     /// Represents positive infinity value of ticks in <see cref="PreciseDuration"/>.
     /// </summary>
-    public const long PositiveInfinityValue = long.MaxValue;
+    public const long PositiveInfinityTicks = long.MaxValue;
 
     /// <summary>
     /// Represents negative infinity value of ticks in <see cref="PreciseDuration"/>.
     /// </summary>
-    public const long NegativeInfinityValue = long.MinValue + 1;
+    public const long NegativeInfinityTicks = long.MinValue + 1;
 
     /// <summary>
     /// Represents the minimum finite value of ticks in <see cref="PreciseDuration"/>.
     /// </summary>
-    public const long MaxValue = long.MaxValue - 1;
+    public const long MaxTicks = long.MaxValue - 1;
 
     /// <summary>
     /// Represents the maximum finite value of ticks in <see cref="PreciseDuration"/>.
     /// </summary>
-    public const long MinValue = long.MinValue + 2;
+    public const long MinTicks = long.MinValue + 2;
 
     /// <summary>
     /// Ticks per second (1e+12).
@@ -63,6 +65,31 @@ public readonly struct PreciseDuration(long ticks)
     public static readonly PreciseDuration Zero = new(0);
 
     /// <summary>
+    /// Represents a Not-a-Number (NaN) value of <see cref="PreciseDuration"/>.
+    /// </summary>
+    public static readonly PreciseDuration NaN = new(NaNTicks);
+
+    /// <summary>
+    /// Represents positive infinity value of <see cref="PreciseDuration"/>.
+    /// </summary>
+    public static readonly PreciseDuration PositiveInfinity = new(PositiveInfinityTicks);
+
+    /// <summary>
+    /// Represents negative infinity value of <see cref="PreciseDuration"/>.
+    /// </summary>
+    public static readonly PreciseDuration NegativeInfinity = new(NegativeInfinityTicks);
+
+    /// <summary>
+    /// Represents the maximum finite value of <see cref="PreciseDuration"/>.
+    /// </summary>
+    public static readonly PreciseDuration MaxValue = new(MaxTicks);
+
+    /// <summary>
+    /// Represents the minimum finite value of <see cref="PreciseDuration"/>.
+    /// </summary>
+    public static readonly PreciseDuration MinValue = new(MinTicks);
+
+    /// <summary>
     /// Gets the number of ticks that represent the value of the current TimeSpan structure.
     /// </summary>
     public long Ticks { get; } = ticks;
@@ -70,17 +97,17 @@ public readonly struct PreciseDuration(long ticks)
     /// <summary>
     /// Gets a value indicating whether this instance is not a number (NaN).
     /// </summary>
-    public bool IsNaN => Ticks == NaNValue;
+    public bool IsNaN => Ticks == NaNTicks;
 
     /// <summary>
     /// Gets a value indicating whether this instance represents positive infinity.
     /// </summary>
-    public bool IsPositiveInfinity => Ticks == PositiveInfinityValue;
+    public bool IsPositiveInfinity => Ticks == PositiveInfinityTicks;
 
     /// <summary>
     /// Gets a value indicating whether this instance represents negative infinity.
     /// </summary>
-    public bool IsNegativeInfinity => Ticks == NegativeInfinityValue;
+    public bool IsNegativeInfinity => Ticks == NegativeInfinityTicks;
 
     /// <summary>
     /// Gets a value indicating whether this instance represents infinity (positive or negative).
@@ -90,9 +117,9 @@ public readonly struct PreciseDuration(long ticks)
     private double DoubleTicks =>
         Ticks switch
         {
-            NaNValue => double.NaN,
-            PositiveInfinityValue => double.PositiveInfinity,
-            NegativeInfinityValue => double.NegativeInfinity,
+            NaNTicks => double.NaN,
+            PositiveInfinityTicks => double.PositiveInfinity,
+            NegativeInfinityTicks => double.NegativeInfinity,
             _ => Ticks,
         };
 
@@ -116,14 +143,30 @@ public readonly struct PreciseDuration(long ticks)
     /// </summary>
     public double TotalNanoseconds => DoubleTicks / TicksPerNanosecond;
 
-    private static long FromScaledValue(double value, long scale) =>
-        value switch
+    private static long FromScaledValue(double value, long scale)
+    {
+        switch (value)
         {
-            double.NaN => NaNValue,
-            double.PositiveInfinity => PositiveInfinityValue,
-            double.NegativeInfinity => NegativeInfinityValue,
-            _ => (long)(value * scale),
-        };
+        case double.NaN:
+            return NaNTicks;
+        case double.PositiveInfinity:
+            return PositiveInfinityTicks;
+        case double.NegativeInfinity:
+            return NegativeInfinityTicks;
+        default:
+            break;
+        }
+        value *= scale;
+        if(value > MaxTicks)
+        {
+            return PositiveInfinityTicks;
+        }
+        if(value < MinTicks)
+        {
+            return NegativeInfinityTicks;
+        }
+        return (long)value;
+    }
 
     /// <summary>
     /// Creates a new <see cref="PreciseDuration"/> representing the specified number of seconds.
@@ -157,25 +200,89 @@ public readonly struct PreciseDuration(long ticks)
     public static PreciseDuration FromNanoseconds(double nanoseconds) =>
         new(FromScaledValue(nanoseconds, TicksPerNanosecond));
 
+    #region ToString overloads
+
+    [GeneratedRegex(@"^(?<real>.+?)(?<unit>nsec|usec|msec|sec|)$")]
+    private static partial Regex GetFormatMatcher();
+    private static readonly Regex _FormatMatcher = GetFormatMatcher();
+
     /// <inheritdoc />
+    [ExcludeFromCodeCoverage]
     public override string ToString() => ToString(TimeScale.Auto);
+
+    /// <inheritdoc cref="ToString(string?, IFormatProvider?)" />
+    [ExcludeFromCodeCoverage]
+    public string ToString(string? format) =>
+        ToString(format, System.Globalization.CultureInfo.CurrentCulture);
+
+    /// <inheritdoc cref="ToString()" />
+    /// <param name="format"></param>
+    /// <param name="formatProvider"></param>
+    /// <para>The format string.</para>
+    /// <para>This contains real number format style and unit suffix.</para>
+    /// <para>Available units are <c>sec</c>, <c>msec</c>, <c>usec</c>, <c>nsec</c>, or empty. </para>
+    /// <para>for 1.234567 seconds, e.g.</para>
+    /// <list type="bullet">
+    /// <item><c>G2sec</c>: <c>1.23 sec</c></item>
+    /// <item><c>G2msec</c>: <c>1234.57 msec</c></item>
+    /// <item><c>e1sec</c>: <c>1.2e+0 sec</c></item>
+    /// <item><c>e1msec</c>: <c>1.2e+3 msec</c></item>
+    /// <item><c>0.0sec</c>: <c>1.2 sec</c></item>
+    /// <item><c>0.0msec</c>: <c>1234.5 msec</c></item>
+    /// </list>
+    /// <exception cref="FormatException" />
+    public string ToString(string? format, IFormatProvider? formatProvider)
+    {
+        if(format is null)
+        {
+            return ToString("", TimeScale.Auto, formatProvider);
+        }
+        var match = _FormatMatcher.Match(format);
+        var realFormat = match.Groups["real"].Value;
+        var unit = match.Groups["unit"].Value switch
+        {
+            "sec" => TimeScale.Seconds,
+            "msec" => TimeScale.Milliseconds,
+            "usec" => TimeScale.Microseconds,
+            "nsec" => TimeScale.Nanoseconds,
+            _ => TimeScale.Auto,
+        };
+        return ToString(realFormat, unit, formatProvider);
+    }
+
+    /// <inheritdoc cref="ToString(string?, TimeScale, IFormatProvider?)" />
+    [ExcludeFromCodeCoverage]
+    public string ToString(TimeScale timeScale) =>
+        ToString("", timeScale);
+
+    /// <inheritdoc cref="ToString(string?, TimeScale, IFormatProvider?)" />
+    [ExcludeFromCodeCoverage]
+    public string ToString(string? realPartFormat, TimeScale timeScale) =>
+        ToString(realPartFormat, timeScale, System.Globalization.CultureInfo.CurrentCulture);
 
     /// <summary>
     /// Gets the string representation of the given time span in the specified time scale.
     /// </summary>
+    /// <param name="realPartFormat"></param>
     /// <param name="timeScale"></param>
+    /// <param name="formatProvider"></param>
     /// <returns></returns>
-    public string ToString(TimeScale timeScale) =>
-            timeScale switch
-            {
-                TimeScale.Nanoseconds => $"{TotalNanoseconds} nsec",
-                TimeScale.Microseconds => $"{TotalMicroseconds} usec",
-                TimeScale.Milliseconds => $"{TotalMilliseconds} msec",
-                TimeScale.Auto => ToString(TimeScale.GetBestTimeScaleFor(this)),
-                _ => string.Empty,
-            };
+    /// <exception cref="FormatException"></exception>
+    public string ToString(string? realPartFormat, TimeScale timeScale, IFormatProvider? formatProvider) =>
+        timeScale switch
+        {
+            TimeScale.Nanoseconds => string.Format(formatProvider, $"{{0:{realPartFormat}}} nsec", TotalNanoseconds),
+            TimeScale.Microseconds => string.Format(formatProvider, $"{{0:{realPartFormat}}} usec", TotalMicroseconds),
+            TimeScale.Milliseconds => string.Format(formatProvider, $"{{0:{realPartFormat}}} msec", TotalMilliseconds),
+            TimeScale.Seconds => string.Format(formatProvider, $"{{0:{realPartFormat}}} sec", TotalSeconds),
+            TimeScale.Auto => ToString(realPartFormat, TimeScale.GetBestTimeScaleFor(this), formatProvider),
+            _ => throw new FormatException("Invalid time scale."),
+        };
+
+    #endregion ToString overloads
 
     /// <inheritdoc />
+    [ExcludeFromCodeCoverage]
     public override int GetHashCode() =>
         Ticks.GetHashCode();
 
@@ -197,33 +304,33 @@ public readonly struct PreciseDuration(long ticks)
     /// <inheritdoc />
     public static PreciseDuration operator +(PreciseDuration x, PreciseDuration y)
     {
-        if(x.Ticks == NaNValue || y.Ticks == NaNValue)
+        if (x.Ticks == NaNTicks || y.Ticks == NaNTicks)
         {
-            return new(NaNValue);
+            return new(NaNTicks);
         }
-        if(x.Ticks == PositiveInfinityValue && y.Ticks == NegativeInfinityValue)
+        if (x.Ticks == PositiveInfinityTicks && y.Ticks == NegativeInfinityTicks)
         {
-            return new(NaNValue);
+            return new(NaNTicks);
         }
-        if(x.Ticks == NegativeInfinityValue && y.Ticks == PositiveInfinityValue)
+        if (x.Ticks == NegativeInfinityTicks && y.Ticks == PositiveInfinityTicks)
         {
-            return new(NaNValue);
+            return new(NaNTicks);
         }
-        if(x.Ticks == PositiveInfinityValue || y.Ticks == PositiveInfinityValue)
+        if (x.Ticks == PositiveInfinityTicks || y.Ticks == PositiveInfinityTicks)
         {
-            return new(PositiveInfinityValue);
+            return new(PositiveInfinityTicks);
         }
-        if(x.Ticks == NegativeInfinityValue || y.Ticks == NegativeInfinityValue)
+        if (x.Ticks == NegativeInfinityTicks || y.Ticks == NegativeInfinityTicks)
         {
-            return new(NegativeInfinityValue);
+            return new(NegativeInfinityTicks);
         }
-        if (x.Ticks > 0 && y.Ticks > MaxValue - x.Ticks)
+        if (x.Ticks > 0 && y.Ticks > MaxTicks - x.Ticks)
         {
-            return new(PositiveInfinityValue);
+            return new(PositiveInfinityTicks);
         }
-        if (x.Ticks < 0 && y.Ticks < MinValue - x.Ticks)
+        if (x.Ticks < 0 && y.Ticks < MinTicks - x.Ticks)
         {
-            return new(NegativeInfinityValue);
+            return new(NegativeInfinityTicks);
         }
         return new(x.Ticks + y.Ticks);
     }
@@ -231,33 +338,33 @@ public readonly struct PreciseDuration(long ticks)
     /// <inheritdoc />
     public static PreciseDuration operator -(PreciseDuration x, PreciseDuration y)
     {
-        if (x.Ticks == NaNValue || y.Ticks == NaNValue)
+        if (x.Ticks == NaNTicks || y.Ticks == NaNTicks)
         {
-            return new(NaNValue);
+            return new(NaNTicks);
         }
-        if (x.Ticks == PositiveInfinityValue && y.Ticks == PositiveInfinityValue)
+        if (x.Ticks == PositiveInfinityTicks && y.Ticks == PositiveInfinityTicks)
         {
-            return new(NaNValue);
+            return new(NaNTicks);
         }
-        if (x.Ticks == NegativeInfinityValue && y.Ticks == NegativeInfinityValue)
+        if (x.Ticks == NegativeInfinityTicks && y.Ticks == NegativeInfinityTicks)
         {
-            return new(NaNValue);
+            return new(NaNTicks);
         }
-        if (x.Ticks == PositiveInfinityValue || y.Ticks == NegativeInfinityValue)
+        if (x.Ticks == PositiveInfinityTicks || y.Ticks == NegativeInfinityTicks)
         {
-            return new(PositiveInfinityValue);
+            return new(PositiveInfinityTicks);
         }
-        if (x.Ticks == NegativeInfinityValue || y.Ticks == PositiveInfinityValue)
+        if (x.Ticks == NegativeInfinityTicks || y.Ticks == PositiveInfinityTicks)
         {
-            return new(NegativeInfinityValue);
+            return new(NegativeInfinityTicks);
         }
-        if (y.Ticks > 0 && x.Ticks < MinValue + y.Ticks)
+        if (y.Ticks > 0 && x.Ticks < MinTicks + y.Ticks)
         {
-            return new(NegativeInfinityValue);
+            return new(NegativeInfinityTicks);
         }
-        if (y.Ticks < 0 && x.Ticks > MaxValue + y.Ticks)
+        if (y.Ticks < 0 && x.Ticks > MaxTicks + y.Ticks)
         {
-            return new(PositiveInfinityValue);
+            return new(PositiveInfinityTicks);
         }
         return new(x.Ticks - y.Ticks);
     }
@@ -265,7 +372,7 @@ public readonly struct PreciseDuration(long ticks)
     /// <inheritdoc />
     public static bool operator >(PreciseDuration x, PreciseDuration y)
     {
-        if (x.Ticks == NaNValue || y.Ticks == NaNValue)
+        if (x.Ticks == NaNTicks || y.Ticks == NaNTicks)
         {
             return false;
         }
@@ -275,7 +382,7 @@ public readonly struct PreciseDuration(long ticks)
     /// <inheritdoc />
     public static bool operator >=(PreciseDuration x, PreciseDuration y)
     {
-        if (x.Ticks == NaNValue || y.Ticks == NaNValue)
+        if (x.Ticks == NaNTicks || y.Ticks == NaNTicks)
         {
             return false;
         }
@@ -285,7 +392,7 @@ public readonly struct PreciseDuration(long ticks)
     /// <inheritdoc />
     public static bool operator <(PreciseDuration x, PreciseDuration y)
     {
-        if (x.Ticks == NaNValue || y.Ticks == NaNValue)
+        if (x.Ticks == NaNTicks || y.Ticks == NaNTicks)
         {
             return false;
         }
@@ -295,7 +402,7 @@ public readonly struct PreciseDuration(long ticks)
     /// <inheritdoc />
     public static bool operator <=(PreciseDuration x, PreciseDuration y)
     {
-        if (x.Ticks == NaNValue || y.Ticks == NaNValue)
+        if (x.Ticks == NaNTicks || y.Ticks == NaNTicks)
         {
             return false;
         }
@@ -305,7 +412,7 @@ public readonly struct PreciseDuration(long ticks)
     /// <inheritdoc />
     public static bool operator ==(PreciseDuration x, PreciseDuration y)
     {
-        if (x.Ticks == NaNValue || y.Ticks == NaNValue)
+        if (x.Ticks == NaNTicks || y.Ticks == NaNTicks)
         {
             return false;
         }
@@ -315,10 +422,39 @@ public readonly struct PreciseDuration(long ticks)
     /// <inheritdoc />
     public static bool operator !=(PreciseDuration x, PreciseDuration y)
     {
-        if (x.Ticks == NaNValue || y.Ticks == NaNValue)
+        if (x.Ticks == NaNTicks || y.Ticks == NaNTicks)
         {
             return false;
         }
         return x.Ticks != y.Ticks;
+    }
+
+    /// <summary>
+    /// Defines an explicit conversion of a <see cref="PreciseDuration"/> to a <see cref="TimeSpan"/>.
+    /// </summary>
+    /// <param name="duration"></param>
+    /// <exception cref="InvalidCastException" />
+    public static explicit operator TimeSpan(PreciseDuration duration)
+    {
+        if (duration.IsNaN || duration.IsInfinity)
+        {
+            throw new InvalidCastException("Cannot convert NaN or Infinity to TimeSpan.");
+        }
+        return TimeSpan.FromTicks(duration.Ticks / (TicksPerMicrosecond / TimeSpan.TicksPerMicrosecond));
+    }
+
+    /// <summary>
+    /// Defines an explicit conversion of a <see cref="TimeSpan"/> to a <see cref="PreciseDuration"/>.
+    /// </summary>
+    /// <param name="timeSpan"></param>
+    /// <exception cref="OverflowException" />
+    public static explicit operator PreciseDuration(TimeSpan timeSpan)
+    {
+        if (timeSpan.Ticks > MaxTicks / (TicksPerMicrosecond / TimeSpan.TicksPerMicrosecond) ||
+           timeSpan.Ticks < MinTicks / (TicksPerMicrosecond / TimeSpan.TicksPerMicrosecond))
+        {
+            throw new OverflowException("TimeSpan value is too large or too small to convert to PreciseDuration.");
+        }
+        return new(timeSpan.Ticks * (TicksPerMicrosecond / TimeSpan.TicksPerMicrosecond));
     }
 }

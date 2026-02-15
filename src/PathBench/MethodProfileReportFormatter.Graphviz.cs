@@ -19,7 +19,7 @@ partial class MethodProfileReportFormatter
         GraphvizStyleFormatterOptions? options = null) =>
         new GraphvizStyle_(options ?? GraphvizStyleFormatterOptions.Default);
 
-    internal sealed class GraphvizStyle_(IGraphvizStyleFormatterOptions options)
+    private sealed class GraphvizStyle_(IGraphvizStyleFormatterOptions options)
         : MethodProfileReportFormatter
     {
         private readonly string _fontName = options.FontName;

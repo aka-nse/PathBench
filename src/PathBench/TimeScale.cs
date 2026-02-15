@@ -16,6 +16,9 @@ public enum TimeScale
 
     /// <summary> Gets or sets the duration in milliseconds. </summary>
     Milliseconds,
+
+    /// <summary> Gets or sets the duration in seconds. </summary>
+    Seconds,
 }
 
 
@@ -57,6 +60,10 @@ public static class TimeScaleExtensions
         /// </remarks>
         public static TimeScale GetBestTimeScaleFor(PreciseDuration duration)
         {
+            if (duration.TotalSeconds >= 0.1)
+            {
+                return TimeScale.Seconds;
+            }
             if (duration.TotalMilliseconds >= 0.1)
             {
                 return TimeScale.Milliseconds;

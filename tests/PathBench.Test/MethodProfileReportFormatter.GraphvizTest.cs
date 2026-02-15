@@ -1,7 +1,25 @@
+using System.Runtime.CompilerServices;
+
 namespace PathBench.Test;
 
-public class MethodProfileReportFormatterGraphvizTest
+public partial class MethodProfileReportFormatterGraphvizTest
 {
+    private static class PrivateAccess
+    {
+        public const string _typeName =
+            $"{nameof(PathBench)}.{nameof(MethodProfileReportFormatter)}+GraphvizStyle_, PathBench";
+
+        [UnsafeAccessor(UnsafeAccessorKind.StaticMethod, Name = "SanitizeIdentifier")]
+        public extern static string SanitizeIdentifier(
+            [UnsafeAccessorType(_typeName)] object? _,
+            string input);
+
+        [UnsafeAccessor(UnsafeAccessorKind.StaticMethod, Name = "SanitizeLabel")]
+        public extern static string SanitizeLabel(
+            [UnsafeAccessorType(_typeName)] object? _,
+            string input);
+    }
+
     public static TheoryData<string, string> SanitizeIdentifierTestCases() =>
         new()
         {
@@ -21,7 +39,7 @@ public class MethodProfileReportFormatterGraphvizTest
     [Theory, MemberData(nameof(SanitizeIdentifierTestCases))]
     public void SanitizeIdentifier(string input, string expected)
     {
-        var actual = MethodProfileReportFormatter.GraphvizStyle_.SanitizeIdentifier(input);
+        var actual = PrivateAccess.SanitizeIdentifier(null, input);
         Assert.Equal(expected, actual);
     }
 
@@ -45,7 +63,7 @@ public class MethodProfileReportFormatterGraphvizTest
     [Theory, MemberData(nameof(SanitizeLabelTestCases))]
     public void SanitizeLabel(string input, string expected)
     {
-        var actual = MethodProfileReportFormatter.GraphvizStyle_.SanitizeLabel(input);
+        var actual = PrivateAccess.SanitizeLabel(null, input);
         Assert.Equal(expected, actual);
     }
 }
