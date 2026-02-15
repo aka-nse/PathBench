@@ -67,6 +67,26 @@ public readonly struct PreciseDuration(long ticks)
     /// </summary>
     public long Ticks { get; } = ticks;
 
+    /// <summary>
+    /// Gets a value indicating whether this instance is not a number (NaN).
+    /// </summary>
+    public bool IsNaN => Ticks == NaNValue;
+
+    /// <summary>
+    /// Gets a value indicating whether this instance represents positive infinity.
+    /// </summary>
+    public bool IsPositiveInfinity => Ticks == PositiveInfinityValue;
+
+    /// <summary>
+    /// Gets a value indicating whether this instance represents negative infinity.
+    /// </summary>
+    public bool IsNegativeInfinity => Ticks == NegativeInfinityValue;
+
+    /// <summary>
+    /// Gets a value indicating whether this instance represents infinity (positive or negative).
+    /// </summary>
+    public bool IsInfinity => IsPositiveInfinity || IsNegativeInfinity;
+
     private double DoubleTicks =>
         Ticks switch
         {
@@ -175,34 +195,130 @@ public readonly struct PreciseDuration(long ticks)
     public int CompareTo(PreciseDuration other) => Ticks.CompareTo(other.Ticks);
 
     /// <inheritdoc />
-    public static PreciseDuration operator +(PreciseDuration left, PreciseDuration right) =>
-        new(left.Ticks + right.Ticks);
+    public static PreciseDuration operator +(PreciseDuration x, PreciseDuration y)
+    {
+        if(x.Ticks == NaNValue || y.Ticks == NaNValue)
+        {
+            return new(NaNValue);
+        }
+        if(x.Ticks == PositiveInfinityValue && y.Ticks == NegativeInfinityValue)
+        {
+            return new(NaNValue);
+        }
+        if(x.Ticks == NegativeInfinityValue && y.Ticks == PositiveInfinityValue)
+        {
+            return new(NaNValue);
+        }
+        if(x.Ticks == PositiveInfinityValue || y.Ticks == PositiveInfinityValue)
+        {
+            return new(PositiveInfinityValue);
+        }
+        if(x.Ticks == NegativeInfinityValue || y.Ticks == NegativeInfinityValue)
+        {
+            return new(NegativeInfinityValue);
+        }
+        if (x.Ticks > 0 && y.Ticks > MaxValue - x.Ticks)
+        {
+            return new(PositiveInfinityValue);
+        }
+        if (x.Ticks < 0 && y.Ticks < MinValue - x.Ticks)
+        {
+            return new(NegativeInfinityValue);
+        }
+        return new(x.Ticks + y.Ticks);
+    }
 
     /// <inheritdoc />
-    public static PreciseDuration operator -(PreciseDuration left, PreciseDuration right) =>
-        new(left.Ticks - right.Ticks);
+    public static PreciseDuration operator -(PreciseDuration x, PreciseDuration y)
+    {
+        if (x.Ticks == NaNValue || y.Ticks == NaNValue)
+        {
+            return new(NaNValue);
+        }
+        if (x.Ticks == PositiveInfinityValue && y.Ticks == PositiveInfinityValue)
+        {
+            return new(NaNValue);
+        }
+        if (x.Ticks == NegativeInfinityValue && y.Ticks == NegativeInfinityValue)
+        {
+            return new(NaNValue);
+        }
+        if (x.Ticks == PositiveInfinityValue || y.Ticks == NegativeInfinityValue)
+        {
+            return new(PositiveInfinityValue);
+        }
+        if (x.Ticks == NegativeInfinityValue || y.Ticks == PositiveInfinityValue)
+        {
+            return new(NegativeInfinityValue);
+        }
+        if (y.Ticks > 0 && x.Ticks < MinValue + y.Ticks)
+        {
+            return new(NegativeInfinityValue);
+        }
+        if (y.Ticks < 0 && x.Ticks > MaxValue + y.Ticks)
+        {
+            return new(PositiveInfinityValue);
+        }
+        return new(x.Ticks - y.Ticks);
+    }
 
     /// <inheritdoc />
-    public static bool operator >(PreciseDuration left, PreciseDuration right) =>
-        left.Ticks > right.Ticks;
+    public static bool operator >(PreciseDuration x, PreciseDuration y)
+    {
+        if (x.Ticks == NaNValue || y.Ticks == NaNValue)
+        {
+            return false;
+        }
+        return x.Ticks > y.Ticks;
+    }
 
     /// <inheritdoc />
-    public static bool operator >=(PreciseDuration left, PreciseDuration right) =>
-        left.Ticks >= right.Ticks;
+    public static bool operator >=(PreciseDuration x, PreciseDuration y)
+    {
+        if (x.Ticks == NaNValue || y.Ticks == NaNValue)
+        {
+            return false;
+        }
+        return x.Ticks >= y.Ticks;
+    }
 
     /// <inheritdoc />
-    public static bool operator <(PreciseDuration left, PreciseDuration right) =>
-        left.Ticks < right.Ticks;
+    public static bool operator <(PreciseDuration x, PreciseDuration y)
+    {
+        if (x.Ticks == NaNValue || y.Ticks == NaNValue)
+        {
+            return false;
+        }
+        return x.Ticks < y.Ticks;
+    }
 
     /// <inheritdoc />
-    public static bool operator <=(PreciseDuration left, PreciseDuration right) =>
-        left.Ticks <= right.Ticks;
+    public static bool operator <=(PreciseDuration x, PreciseDuration y)
+    {
+        if (x.Ticks == NaNValue || y.Ticks == NaNValue)
+        {
+            return false;
+        }
+        return x.Ticks <= y.Ticks;
+    }
 
     /// <inheritdoc />
-    public static bool operator ==(PreciseDuration left, PreciseDuration right) =>
-        left.Ticks == right.Ticks;
+    public static bool operator ==(PreciseDuration x, PreciseDuration y)
+    {
+        if (x.Ticks == NaNValue || y.Ticks == NaNValue)
+        {
+            return false;
+        }
+        return x.Ticks == y.Ticks;
+    }
 
     /// <inheritdoc />
-    public static bool operator !=(PreciseDuration left, PreciseDuration right) =>
-        left.Ticks != right.Ticks;
+    public static bool operator !=(PreciseDuration x, PreciseDuration y)
+    {
+        if (x.Ticks == NaNValue || y.Ticks == NaNValue)
+        {
+            return false;
+        }
+        return x.Ticks != y.Ticks;
+    }
 }
