@@ -1,9 +1,22 @@
 <Solution>
-  <Folder Name="/etc/" />
+  <Folder Name="/etc/">
+    <File Path=".editorconfig" />
+    <File Path=".gitignore" />
+    <File Path="Directory.Build.props" />
+    <File Path="global.json" />
+    <File Path="LICENSE.txt" />
+    <File Path="Measure-Coverage.ps1" />
+    <File Path="README.md" />
+  </Folder>
+  <Folder Name="/etc/resources/">
+    <File Path="resources/GraphvizSample.svg" />
+  </Folder>
   <Folder Name="/src/">
     <Project Path="src/PathBench/PathBench.csproj" Id="69a8b74a-08f8-4934-80d8-229c5248a29a" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/PathBench.Benchmark/PathBench.Benchmark.csproj" Id="6ce93543-91f0-4dae-8cf1-969708140bba" />
     <Project Path="tests/PathBench.Sample/PathBench.Sample.csproj" Id="bb79d7c3-187b-428c-8b10-1e932f95b53c" />
+    <Project Path="tests/PathBench.Test/PathBench.Test.csproj" Id="7fd1eb49-af7b-4162-b3de-ac73f22b2af2" />
   </Folder>
 </Solution>

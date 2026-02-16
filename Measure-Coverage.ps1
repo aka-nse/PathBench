@@ -12,16 +12,16 @@ try {
     }
 
     # remove old test report
-    Get-ChildItem -Directory src/*.Test*/TestResults/* | Remove-Item -Recurse
+    Get-ChildItem -Directory tests/*.Test*/TestResults/* | Remove-Item -Recurse
 
     # rebuild target project to generate source generator files
     dotnet build PathBench.slnx --no-incremental --property:EmitCompilerGeneratedFiles=true
 
     # test and measure coverage
-    dotnet test PathBench.slnx --collect:"XPlat Code Coverage" --settings src/etc/coverlet.runsettings
+    dotnet test PathBench.slnx --collect:"XPlat Code Coverage" --settings tests/etc/coverlet.runsettings
 
     # export HTML coverage report
-    Get-ChildItem src/*.Test*/TestResults/*/coverage.cobertura.xml `
+    Get-ChildItem tests/*.Test*/TestResults/*/coverage.cobertura.xml `
         | ForEach-Object {
             $name = $_.FullName -replace '^.+[/\\](.+?)[/\\]TestResults[/\\].+[/\\]coverage.cobertura.xml$', '$1'
             &./.dotnet/reportgenerator -reports:"$_" -targetdir:".CodeCoverage/$name" -reporttypes:Html
