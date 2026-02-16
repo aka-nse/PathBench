@@ -30,6 +30,8 @@ partial class CodePathProfiler
             private long _invocationCount = 0;
             private WelfordStatistics _overallDurations;
 
+            private long TimestampFrequency => Owner.TimeProvider.TimestampFrequency;
+
             public Impl_ Owner => owner;
             public string Name { get; } = $"{owner.ClassName}.{methodName}";
 
@@ -47,21 +49,20 @@ partial class CodePathProfiler
 
             public void TerminateInvocation(InvocationProfiler_ invocation)
             {
+                var x = (double)invocation.Duration / TimestampFrequency;
+                var checkpoints = CollectionsMarshal.AsSpan(invocation.Checkpoints);
                 using (_lockToken.EnterScope())
                 {
-                    var x = (double)invocation.Duration / Owner.TimeProvider.TimestampFrequency;
-
                     // update overall statistics
                     _overallDurations.IncrementResult(x);
 
                     // update code path report
-                    var checkpoints = CollectionsMarshal.AsSpan(invocation.Checkpoints);
                     for (var i = 0; i < checkpoints.Length - 1; ++i)
                     {
                         var start = invocation.Checkpoints[i];
                         var end = invocation.Checkpoints[i + 1];
                         var key = new CheckpointTransitionKey(start.Name, end.Name);
-                        var y = (double)(end.DurationTimestamp - start.DurationTimestamp) / Owner.TimeProvider.TimestampFrequency;
+                        var y = (double)(end.DurationTimestamp - start.DurationTimestamp) / TimestampFrequency;
                         if (!_codePathResults.TryGetValue(key, out var result))
                         {
                             result = new(key, start.SortKey, end.SortKey);
