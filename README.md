@@ -89,3 +89,9 @@ static class SampleClass
 ```
 
 ![graphviz sample](resources/GraphvizSample.svg)
+
+## Release Notes
+
+### v1.0.0
+
+- First release
