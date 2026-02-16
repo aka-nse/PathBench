@@ -96,13 +96,15 @@ partial class CodePathProfiler
                 long times;
                 double mean_sec;
                 double sd_sec;
+                double max_sec;
+                double min_sec;
                 InvocationProfiler_[] recentHistory;
                 InvocationProfiler_[] worstHistory;
                 var foundCheckpoints = ImmutableDictionary.CreateBuilder<string, CheckpointMetadata>();
                 var codePathSummaries = ImmutableDictionary.CreateBuilder<CheckpointTransitionKey, CheckpointTransitionProfileReport>();
                 using (_lockToken.EnterScope())
                 {
-                    (times, mean_sec, sd_sec) = _overallDurations;
+                    (times, mean_sec, sd_sec, max_sec, min_sec) = _overallDurations;
                     foreach (var (key, result) in _codePathResults)
                     {
                         foundCheckpoints.TryAdd(key.StartCheckpoint, new CheckpointMetadata(key.StartCheckpoint, result.StartCheckpointSortKey));
@@ -120,6 +122,8 @@ partial class CodePathProfiler
                     TotalTimes: times,
                     MeanDuration: PreciseDuration.FromSeconds(mean_sec),
                     StandardDeviationOfDuration: PreciseDuration.FromSeconds(sd_sec),
+                    MaxDuration: PreciseDuration.FromSeconds(max_sec),
+                    MinDuration: PreciseDuration.FromSeconds(min_sec),
                     FoundCheckpoints: foundCheckpoints.ToImmutable(),
                     CodePathSummaries: codePathSummaries.ToImmutable(),
                     Histories: histories.ToImmutable());
@@ -138,8 +142,13 @@ partial class CodePathProfiler
 
                 public CheckpointTransitionProfileReport CreateSummary()
                 {
-                    var (times, mean_sec, sd_sec) = _durations;
-                    return new(Key, times, PreciseDuration.FromSeconds(mean_sec), PreciseDuration.FromSeconds(sd_sec));
+                    var (times, mean_sec, sd_sec, max_sec, min_sec) = _durations;
+                    return new(
+                        Key, times,
+                        PreciseDuration.FromSeconds(mean_sec),
+                        PreciseDuration.FromSeconds(sd_sec),
+                        PreciseDuration.FromSeconds(max_sec),
+                        PreciseDuration.FromSeconds(min_sec));
                 }
             }
         }

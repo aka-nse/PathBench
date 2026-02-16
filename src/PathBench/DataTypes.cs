@@ -53,6 +53,8 @@ public record struct CheckpointTransitionKey(
 /// <param name="TotalTimes"></param>
 /// <param name="MeanDuration"></param>
 /// <param name="StandardDeviationOfDuration"></param>
+/// <param name="MaxDuration"></param>
+/// <param name="MinDuration"></param>
 /// <param name="FoundCheckpoints"></param>
 /// <param name="CodePathSummaries"></param>
 /// <param name="Histories"></param>
@@ -61,6 +63,8 @@ public record class MethodProfileReport(
     long TotalTimes,
     PreciseDuration MeanDuration,
     PreciseDuration StandardDeviationOfDuration,
+    PreciseDuration MaxDuration,
+    PreciseDuration MinDuration,
     ImmutableDictionary<string, CheckpointMetadata> FoundCheckpoints,
     ImmutableDictionary<CheckpointTransitionKey, CheckpointTransitionProfileReport> CodePathSummaries,
     ImmutableDictionary<HistoryType, ImmutableArray<InvocationMeasurementReport>> Histories
@@ -84,11 +88,15 @@ public record class MethodProfileReport(
 /// <param name="TotalTimes"></param>
 /// <param name="MeanDuration"></param>
 /// <param name="StandardDeviationOfDuration"></param>
+/// <param name="MaxDuration"></param>
+/// <param name="MinDuration"></param>
 public record class CheckpointTransitionProfileReport(
     CheckpointTransitionKey Key,
     long TotalTimes,
     PreciseDuration MeanDuration,
-    PreciseDuration StandardDeviationOfDuration);
+    PreciseDuration StandardDeviationOfDuration,
+    PreciseDuration MaxDuration,
+    PreciseDuration MinDuration);
 
 /// <summary>
 /// Summary of one invocation measurement.

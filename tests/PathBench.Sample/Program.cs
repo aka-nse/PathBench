@@ -1,37 +1,29 @@
-// See https://aka.ms/new-console-template for more information
-using System.Runtime.CompilerServices;
 using PathBench;
 
+invokeTest();
 
-SampleClass.InvokeTest();
+static void invokeTest()
+{
+    for (var i = 0; i < 1000; ++i)
+    {
+        SampleClass.SimulatedWork(i);
+    }
 
+    var reports = SampleClass.Profiler.CreateProfileReports();
+    var sw = new StringWriter();
+    MethodProfileReportFormatter.DefaultGraphvizStyle.Format(
+        reports[nameof(SampleClass.SimulatedWork)],
+        writer: sw);
+    Console.WriteLine(sw.ToString());
+}
 
 static class SampleClass
 {
-    public static readonly CodePathProfiler _Profiler = CodePathProfiler.Create();
+    public static readonly CodePathProfiler Profiler = CodePathProfiler.Create();
 
-    public static void InvokeTest()
+    public static void SimulatedWork(int seed)
     {
-        for (var i = 0; i < 1000; ++i)
-        {
-            Console.Write($"\r        \r{i}");
-            SimulatedWork(i);
-        }
-        Console.WriteLine();
-
-        var reports = _Profiler.CreateProfileReports();
-        Console.WriteLine(reports[nameof(SimulatedWork)]);
-        Console.WriteLine();
-        var sw = new StringWriter();
-        MethodProfileReportFormatter.DefaultGraphvizStyle.Format(
-            reports[nameof(SimulatedWork)],
-            writer: sw);
-        Console.WriteLine(sw.ToString());
-    }
-
-    private static void SimulatedWork(int seed)
-    {
-        using var counter = _Profiler.StartMeasurement(argumentsExpressionProvider: $"seed={seed}");
+        using var counter = Profiler.StartMeasurement(argumentsExpressionProvider: $"seed={seed}");
         if (seed % 2 == 0)
         {
             counter.MarkCheckpoint("EvenSeed");
@@ -64,7 +56,6 @@ static class SampleClass
         }
     }
 
-    [MethodImpl(MethodImplOptions.NoInlining)]
     private static void Wait(int value)
     {
         Thread.SpinWait(value * 100);
