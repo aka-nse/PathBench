@@ -21,6 +21,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <None Include="../../resources/GraphvizSample.svg" Pack="true" PackagePath="resources" />
         <None Include="../../readme.md" Pack="true" PackagePath="" />
         <None Include="../../LICENSE.txt" Pack="true" PackagePath="" />
     </ItemGroup>
