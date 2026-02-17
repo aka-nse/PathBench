@@ -1,0 +1,27 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <GenerateDocumentationFile>True</GenerateDocumentationFile>
+    </PropertyGroup>
+
+    <!-- package configs -->
+    <PropertyGroup>
+        <PackageId>akanse.$(AssemblyName)</PackageId>
+        <Title>PathBench</Title>
+        <Version>1.0.0</Version>
+        <Company />
+        <Product>PathBench</Product>
+        <Description>Code path performance monitoring tool.</Description>
+        <PackageReadmeFile>readme.md</PackageReadmeFile>
+        <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Configuration)'=='Release'">
+        <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <None Include="../../readme.md" Pack="true" PackagePath="" />
+        <None Include="../../LICENSE.txt" Pack="true" PackagePath="" />
+    </ItemGroup>
+</Project>

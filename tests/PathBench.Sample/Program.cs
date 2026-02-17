@@ -1,28 +1,3 @@
-# PathBench
-
-Code path performance monitoring tool.
-
-----
-
-## Features
-
-*PathBench* is a tool that measures method execution time to identify performance bottlenecks. It provides the following features:
-
-- **Method execution time statistics**: Measures method execution times and provides statistical information such as the mean, standard deviation, minimum, and maximum.
-- **Checkpoint recording**: Allows you to set checkpoints at arbitrary locations within a method and measure the execution time between checkpoints.
-- **Result visualization**: Outputs measurement results in Graphviz format and visualizes them as a directed graph between checkpoints.
-
-## Usage
-
-1. **Installation**: Add *PathBench* to your project from NuGet.
-2. **Code changes**
-    1. Create a `CodePathCounter` instance in the class that contains the method you want to monitor.
-    2. At the beginning of the monitored method, call `counter.StartMeasurement()` to create a measurement instance and start the measurement.
-    3. Dispose the measurement instance to end the measurement.
-    4. Call the `CreateProfileReports()` method on the `CodePathCounter` instance to produce measurement report instances.
-    5. Pass the measurement report instances to an appropriate formatter to output the results.
-
-```csharp
 using PathBench;
 
 invokeTest();
@@ -86,12 +61,3 @@ static class SampleClass
         Thread.SpinWait(value * 100);
     }
 }
-```
-
-![graphviz sample](resources/GraphvizSample.svg)
-
-## Release Notes
-
-### v1.0.0
-
-- First release

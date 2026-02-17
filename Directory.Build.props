@@ -1,0 +1,15 @@
+<Project>
+    <!-- language configs -->
+    <PropertyGroup>
+        <LangVersion>14.0</LangVersion>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+    </PropertyGroup>
+
+    <!-- package configs -->
+    <PropertyGroup>
+        <Authors>aka-nse</Authors>
+        <PackageProjectUrl>https://github.com/aka-nse/PathBench</PackageProjectUrl>
+        <RepositoryUrl>https://github.com/aka-nse/PathBench</RepositoryUrl>
+    </PropertyGroup>
+</Project>
