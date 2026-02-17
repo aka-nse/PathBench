@@ -10,9 +10,6 @@
     <PropertyGroup>
         <Authors>aka-nse</Authors>
         <PackageProjectUrl>https://github.com/aka-nse/PathBench</PackageProjectUrl>
-        <PackageReadmeFile>readme.md</PackageReadmeFile>
         <RepositoryUrl>https://github.com/aka-nse/PathBench</RepositoryUrl>
-        <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
-        <PackageIcon>icon.png</PackageIcon>
     </PropertyGroup>
 </Project>
