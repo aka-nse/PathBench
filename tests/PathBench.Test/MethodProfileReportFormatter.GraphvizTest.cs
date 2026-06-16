@@ -1,3 +1,4 @@
+using System.Reflection;
 using System.Runtime.CompilerServices;
 
 namespace PathBench.Test;
@@ -9,6 +10,8 @@ public partial class MethodProfileReportFormatterGraphvizTest
         public const string _typeName =
             $"{nameof(PathBench)}.{nameof(MethodProfileReportFormatter)}+GraphvizStyle_, PathBench";
 
+#if NET10_0_OR_GREATER
+
         [UnsafeAccessor(UnsafeAccessorKind.StaticMethod, Name = "SanitizeIdentifier")]
         public extern static string SanitizeIdentifier(
             [UnsafeAccessorType(_typeName)] object? _,
@@ -18,6 +21,29 @@ public partial class MethodProfileReportFormatterGraphvizTest
         public extern static string SanitizeLabel(
             [UnsafeAccessorType(_typeName)] object? _,
             string input);
+
+#else
+        private static readonly Type _GraphvizStyle_ =
+            typeof(MethodProfileReportFormatter)
+            .GetNestedType("GraphvizStyle_", BindingFlags.NonPublic)!;
+
+        private static readonly MethodInfo _SanitizeIdentifier =
+            _GraphvizStyle_.GetMethod("SanitizeIdentifier", BindingFlags.Public | BindingFlags.Static)!;
+
+        private static readonly MethodInfo _SanitizeLabel =
+            _GraphvizStyle_.GetMethod("SanitizeLabel", BindingFlags.Public | BindingFlags.Static)!;
+
+        public static string SanitizeIdentifier(object? _, string input)
+        {
+            return (string)_SanitizeIdentifier.Invoke(null, [input])!;
+        }
+
+        public static string SanitizeLabel(object? _, string input)
+        {
+            return (string)_SanitizeLabel.Invoke(null, [input])!;
+        }
+
+#endif
     }
 
     public static TheoryData<string, string> SanitizeIdentifierTestCases() =>

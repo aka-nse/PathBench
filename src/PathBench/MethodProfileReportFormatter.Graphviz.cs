@@ -86,17 +86,17 @@ partial class MethodProfileReportFormatter
         {
             var sb = new StringBuilder();
             sb.Append("__");
-            foreach (var c in name.EnumerateRunes())
+            foreach (var c in name)
             {
-                switch (c.Value)
+                switch (c)
                 {
-                case >= 0x30 and < 0x3A:
-                case >= 0x41 and < 0x5B:
-                case >= 0x61 and < 0x7B:
+                case >= (char)0x30 and < (char)0x3A:
+                case >= (char)0x41 and < (char)0x5B:
+                case >= (char)0x61 and < (char)0x7B:
                     sb.Append(c);
                     continue;
                 default:
-                    sb.Append($"_u{(uint)c.Value:X04}_");
+                    sb.Append($"_u{(uint)c:X04}_");
                     continue;
                 }
             }
@@ -106,9 +106,9 @@ partial class MethodProfileReportFormatter
         public static string SanitizeLabel(string name)
         {
             var sb = new StringBuilder(name.Length * 2);
-            foreach (var c in name.EnumerateRunes())
+            foreach (var c in name)
             {
-                switch (c.Value)
+                switch (c)
                 {
                 case '\n':
                     sb.Append(@"\n");

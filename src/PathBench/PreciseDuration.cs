@@ -1,4 +1,6 @@
+#if NET7_0_OR_GREATER
 using System.Numerics;
+#endif
 using System.Text.RegularExpressions;
 
 namespace PathBench;
@@ -9,9 +11,11 @@ namespace PathBench;
 public readonly partial struct PreciseDuration(long ticks)
     : IEquatable<PreciseDuration>
     , IComparable<PreciseDuration>
+#if NET7_0_OR_GREATER
     , IComparisonOperators<PreciseDuration, PreciseDuration, bool>
     , IAdditionOperators<PreciseDuration, PreciseDuration, PreciseDuration>
     , ISubtractionOperators<PreciseDuration, PreciseDuration, PreciseDuration>
+#endif
     , IFormattable
 {
     /// <summary>
@@ -202,8 +206,14 @@ public readonly partial struct PreciseDuration(long ticks)
 
     #region ToString overloads
 
-    [GeneratedRegex(@"^(?<real>.+?)(?<unit>nsec|usec|msec|sec|)$")]
+    //lang=regex
+    private const string _formatMatchingPattern = @"^(?<real>.+?)(?<unit>nsec|usec|msec|sec|)$";
+#if NET7_0_OR_GREATER
+    [GeneratedRegex(_formatMatchingPattern)]
     private static partial Regex GetFormatMatcher();
+#else
+    private static Regex GetFormatMatcher() => new (_formatMatchingPattern, RegexOptions.Compiled);
+#endif
     private static readonly Regex _FormatMatcher = GetFormatMatcher();
 
     /// <inheritdoc />
@@ -279,7 +289,7 @@ public readonly partial struct PreciseDuration(long ticks)
             _ => throw new FormatException("Invalid time scale."),
         };
 
-    #endregion ToString overloads
+#endregion ToString overloads
 
     /// <inheritdoc />
     [ExcludeFromCodeCoverage]

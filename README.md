@@ -2,6 +2,10 @@
 
 Code path performance monitoring tool.
 
+[<img src="https://img.shields.io/badge/-GitHub-blue.svg?logo=github" />](https://github.com/aka-nse/PathBench/)
+
+[<img src="https://img.shields.io/badge/-NuGet-019733.svg?logo=nuget" />](https://www.nuget.org/packages/akanse.PathBench/)
+
 ----
 
 ## Features
@@ -95,3 +99,7 @@ static class SampleClass
 ### v1.0.0
 
 - First release
+
+### v1.1.0
+
+- Adds support for net standard 2.0
