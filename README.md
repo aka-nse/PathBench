@@ -99,3 +99,7 @@ static class SampleClass
 ### v1.0.0
 
 - First release
+
+### v1.1.0
+
+- Adds support for net standard 2.0
